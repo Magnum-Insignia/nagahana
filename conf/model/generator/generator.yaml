@@ -1,0 +1,4 @@
+# Generator (training only; src/nagahana/models/generator).
+families: ???                  # held: D-14 (jem / energy-ssl / masked-generative / autoregressive / diffusion)
+controls: [observability, signature, trace, impact]
+physics_gate_tau: ???          # used only if proposal P-11 is enabled

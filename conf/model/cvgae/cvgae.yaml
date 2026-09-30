@@ -1,0 +1,11 @@
+# CVG-AE (src/nagahana/models/cvgae). Encoder registry name selects the implementation.
+encoder: hgnn-mean-reference   # reference baseline; production entry: pyg-hypergraphconv
+planes: ???                    # held: D-04 (how planes are formed)
+in_dim: ???
+dim: ???
+layers: ???                    # horizontal layers per plane branch (A-04)
+cont_dim: ???                  # continuous latent width
+disc_groups: ???               # categorical latent: groups G
+disc_classes: ???              # categorical latent: classes C
+latent_space: ???              # version tag of the shared latent space (P-19)
+reconstruction_target: ???     # held: D-11a

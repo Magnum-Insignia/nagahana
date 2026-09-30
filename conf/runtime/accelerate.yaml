@@ -1,0 +1,6 @@
+# Distributed/mixed-precision runtime (HF Accelerate; DeepSpeed optional). Hardware is site-specific.
+mixed_precision: ???           # no | fp16 | bf16
+deepspeed:
+  enabled: ???
+  zero_stage: ???
+gradient_accumulation_steps: ???

@@ -1,0 +1,12 @@
+# Memory regions (src/nagahana/memory). Access rules are code (memory/access.py), not config.
+retention:
+  schedule: constant          # α_k depends only on the trigger index k (D-36)
+  alpha: ???
+
+trigger_policy: ???           # held: D-02 (fixed cadence / capped priority triggers / other)
+
+environment_persistence: ???  # held: D-15 (KV cache only / KV cache as a view over an event log)
+
+kv_cache:
+  element_bytes: ???          # 2 for fp16/bf16, 4 for fp32
+  max_positions: ???          # bound set with the retention schedule

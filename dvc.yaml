@@ -1,0 +1,28 @@
+# DVC pipeline template: one stage per pipeline stage (src/nagahana/pipeline/stages.py, D-22).
+# Commands are placeholders until each stage's runner exists; `dvc repro` will fail loudly on them,
+# which is intended (no stage runs on assumptions). Requires `git init` + `dvc init` (not done yet).
+stages:
+  s1_analysis:
+    cmd: python -m nagahana stage-run analysis          # runner to be written
+    deps: [data/raw]
+    outs: [outputs/analysis]
+  s2_preparation:
+    cmd: python -m nagahana stage-run preparation
+    deps: [data/raw, outputs/analysis]
+    outs: [data/prepared, outputs/split_manifest.json]
+  s3_pretrain_perception:
+    cmd: python -m nagahana stage-run pretrain-perception
+    deps: [data/prepared]
+    outs: [checkpoints/perception]
+  s4_pretrain_taaft:
+    cmd: python -m nagahana stage-run pretrain-taaft
+    deps: [data/prepared, checkpoints/perception]
+    outs: [checkpoints/taaft]
+  s5_full_training:
+    cmd: python -m nagahana stage-run full-training
+    deps: [data/prepared, checkpoints/taaft]
+    outs: [checkpoints/full]
+  s6_zero_shot:
+    cmd: python -m nagahana stage-run zero-shot
+    deps: [data/prepared, checkpoints/full]
+    outs: [outputs/evaluation]

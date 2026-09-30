@@ -1,0 +1,24 @@
+site_name: NagaHana (research codebase)
+theme:
+  name: material
+markdown_extensions:
+  - pymdownx.arithmatex:
+      generic: true
+  - tables
+  - toc:
+      permalink: true
+nav:
+  - Home: index.md
+  - Architecture: architecture.md
+  - Glossary: glossary.md
+  - Decisions: decisions.md
+  - Sources:
+      - Index: sources/index.md
+  - ADRs:
+      - Template: adr/0000-template.md
+      - 0001 Codebase conventions: adr/0001-codebase-conventions.md
+      - 0002 Names: adr/0002-names.md
+      - 0003 Physics as a boundary: adr/0003-physics-as-boundary.md
+      - 0004 Human-gated Verifier: adr/0004-human-gated-verifier.md
+      - 0005 Threat-model scope: adr/0005-threat-model-scope.md
+      - 0006 Training pipeline: adr/0006-training-pipeline.md

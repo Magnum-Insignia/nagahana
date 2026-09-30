@@ -1,0 +1,7 @@
+# TSTCT (src/nagahana/models/tstct).
+layers: ???
+heads: {spatial: ???, temporal: ???, causal: ???}
+head_dim: ???
+time_encoding_periods: ???     # number of periodic components in τ(Δt)
+causal_structure: ???          # method for learning sparse cause → effect links (not yet specified)
+pretraining_objective: ???     # stage 3; tied to D-11a
