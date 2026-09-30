@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.hypothesis/
+
+# Data and artefacts (versioned with DVC, never with git)
+data/
+outputs/
+checkpoints/
+mlruns/
+*.pcap
+*.pcapng
+*.parquet
+
+# Docs build
+site/
+
+# The owner's verbatim statements stay in the private workspace
+docs/sources/quotes.md

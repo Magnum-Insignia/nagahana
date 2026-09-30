@@ -1,0 +1,11 @@
+# TAAFT (src/nagahana/models/taaft).
+lenses: [belief-trust, energy, game, information, topology, temporal, causal]
+# Lenses gated by held decisions (add only after the decision): mechanism-design (D-24), noise (D-26).
+policy_coupling: ???           # held: D-12 (joint / separate / staged)
+energy:
+  refinement_steps: ???        # inference-time scaling knob
+  step_size: ???
+  noise_schedule: ???
+  v1_jobs: ???                 # held: D-11b
+suspicion_floor: ???           # assume-breach floor, strictly in (0, 1)
+pretraining_objectives: ???    # stage 4 self-supervised objectives (not yet specified)

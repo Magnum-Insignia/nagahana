@@ -1,0 +1,19 @@
+# The shared physics boundary Φ_phys (src/nagahana/physics). A boundary on model outputs (D-18).
+target: model_output          # decided use; "observation" is held (D-25)
+
+residuals:
+  - name: flag_count_bound
+    args: {flag: syn}
+  - name: mtu_bound
+    args: {direction: fwd, mtu: ???}     # site-specific path MTU (no default)
+  - name: mtu_bound
+    args: {direction: bwd, mtu: ???}
+  - name: iat_max_bound
+    args: {}
+
+# One weight w_c > 0 per residual name (no defaults).
+weights:
+  flag_count_bound.syn: ???
+  mtu_bound.fwd: ???
+  mtu_bound.bwd: ???
+  iat_max_bound: ???
