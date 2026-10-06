@@ -27,5 +27,8 @@ __pycache__/
 # Private notes stay out of the repository
 docs/sources/quotes.md
 
-# Tests are not published
+# Tests, docs, scripts and tools stay local
 /tests/
+/docs/
+/scripts/
+/tools/
