@@ -1,5 +1,11 @@
 # NagaHana — Adversary Foundation Model
 
+<div align="right">
+
+[![Full Results](https://img.shields.io/badge/📊_Full_Results-View_RESULTS.md-0d6efd?style=for-the-badge)](RESULTS.md)
+
+</div>
+
 > **⚠️ Model Weights Notice**
 > The trained NagaHana (L) weights file is **4.54 GB (fp32)** — too large for GitHub to host.
 > Weights are distributed separately. This repository contains the full source, configuration, evaluation framework, and documentation only.
