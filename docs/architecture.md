@@ -1,4 +1,4 @@
-# NagaHana architecture: canonical brief (2026-09-29)
+# NagaHana architecture: canonical brief (2026-09-29; updated 2026-10-01)
 
 This is the single reference for the *current* design. The codebase, diagrams, thesis document,
 product site and story all follow it. Sources: `ai-mod-arch` (snapshot 2026-09-29 → quote IDs
@@ -41,6 +41,7 @@ Vocabulary: state model, state, state update, transition, entity state. **Never 
 1. **Sense.** Passive sources produce records: pcap, NetFlow/sFlow/IPFIX, Zeek, Suricata, Snort, TAPs, routers/switches, custom hardware. Source adapters map each record into one **superset data model** (datamodel.md; OCSF/CSTS-compatible, D-06). The data model is human-auditable, Kafka-carried, and has temporal ordering resolved before the model [Q-20]. Each field carries an **observation status**. **Absence is "not supplied", never zero** (D-41).
 2. **One record = one state update** (event-driven, D-30). Every update carries flow-level features, packet-level features, and further observable-region features such as DNS, Kerberos, TLS/JA4, Modbus, DNP3 and IEC-104 (D-38).
 3. **Perceive: CVG-AE (Simulator).** The network is a **heterogeneous multiplex hypergraph**: typed entities, relation planes, hyperedges (D-39).
+   - Entities: **one per machine** (D-48). A machine's IPv6 link-local addresses are its aliases, matched through the Ethernet address that ARP shows for it. Group destinations (multicast and broadcast) are entities of their own kind, `multicast` (D-47). Roles and names are inferred from the traffic, never from known addresses, and each carries the time from which it was known (ADR-0009).
    - Each plane has its own parallel branch of hypergraph layers ("vertical" layers [A-01], [A-03]), each with its own sequence of hidden layers ("horizontal" [A-04]).
    - Branches exchange information every layer through learned cross-plane coupling.
    - A **variational** head produces the latent state z: hybrid, with continuous factors for rates, entropies and timings, and categorical factors for structure and stage (D-20; ARCH #16).
@@ -54,20 +55,26 @@ Vocabulary: state model, state, state update, transition, entity state. **Never 
    - temporal: an entity's own past, with no future leakage;
    - causal: learned, sparse cause → effect.
 
+   TSTCT loops on itself: the same block stack is applied for R passes with shared weights (D-43). R is a budget set at run time and recorded with each forecast (D-44).
+
    CVG-AE and TSTCT are *perceptors, not analysers* [A-19].
 6. **Show: Decoder (parallel output).** It decodes latents back into a readable network graph. This proves the perceptors work, gives a direct view into the Environment and, through the shared latent space, into Imagination [A-13]. Every element is tagged **observed / believed / forecast**. Beliefs never render as facts.
-7. **Analyse: TAAFT (Forecaster) → Imagination.** TAAFT reads the Environment cache and writes **the KV cache of the analysis**: this is Imagination [A-14]. It is "the crux of this model being adversary foundation model" [A-19]. Its lenses:
+7. **Analyse: TAAFT (Forecaster) → Imagination.** TAAFT reads the Environment cache and writes **the KV cache of the analysis**: this is Imagination [A-14]. It is "the crux of this model being adversary foundation model" [A-19].
+   - **The energy-based transformer is its core, and the lenses are terms of the energy** (D-42): E_total = E_belief-and-trust + E_game + E_information + E_topology + E_time + E_cause + λ·Φ_phys. Refinement descends E_total; more descent steps give inference-time scaling. λ is not decided.
+   - TAAFT loops on itself for R passes with shared weights, like TSTCT (D-43, D-44). There is **no loop from TAAFT back into TSTCT**: beliefs must never overwrite observed facts in the Environment.
+
+   Its lenses (each one a term of E_total):
    - **observability trust/distrust management and belief (suspicion) computation** (POMDP/POSG): what cannot be seen is not assumed absent;
-   - **the energy-based transformer as its core**: an energy landscape of the network; refinement by descending energy; inference-time scaling;
    - **game theory and mechanism design** (team-level two-sum POSG [Q-12]);
    - **information theory and SNR / noise analysis** (coloured vs white noise, held D-26);
    - **graph and mathematical topology**, with light social-network analysis;
    - **time series and temporal analysis**;
    - **causal inference**.
-8. **Forecast: Forecaster policy/value.** Policy and value functions, MPC-guided model-based deep RL [Q-28], plan as the adversary would. They imagine **K future states over N samples** (K and N are chosen at runtime, D-30), with a process reward per imagined step [Q-24]. How TAAFT and the heads couple (joint / separate / staged) is held (D-12). Outputs are listed in §6.
+8. **Forecast: Forecaster policy/value.** Policy and value functions, MPC-guided model-based deep RL [Q-28], plan as the adversary would. They imagine **K future states along at most N routes** (K and N are chosen at runtime, D-30). N is the maximum number of routes explored, since futures diverge; fewer distinct routes may come back (D-46). Each imagined step has a process reward [Q-24]. How TAAFT and the heads couple (joint / separate / staged) is held (D-12). Outputs are listed in §6.
 9. **Advise: Advisor.** A second policy/value agent works on **both** caches (D-01, [A-15], [A-20]). It searches for **D3FEND-based counter-measure sequences** at graph or sensor level. They are re-imagined against the Forecaster's adversary and ranked by risk reduction, disruption and feasibility. **Advisory only.** It relates to the Forecaster like a GAN in function only [Q-38]. The Advisor keeps no memory of its own.
 10. **Govern: Verifier.** The regulator. It stores human feedback (step labels on imagined steps, outcome labels, "responded-to" tags) as **supplied truth** [A-21]. It calibrates forecasts (RLCD, the calibrated-decisions standard [Q-34]; conformal thresholds). It computes **memory drift from outcome–forecast pairs** in the **Monitor** region, which makes poisoning visible [A-16].
-    - It observes online, but **changes weights only on a human's supervised command** (D-21).
+    - A **value head** scores how far a forecast or an advice can be trusted (learned from human feedback), and a **policy head** proposes the calibration correction (D-45).
+    - It observes online, but **changes weights only on a human's supervised command** (D-21); a proposed correction is applied only on such a command.
     - It never feeds back automatically, because that "would conduct the poisoning again" [A-16].
 11. **Augment (training only): Generator.** It makes label-preserving variants of real events by observability sliding, signatures, traces and impacts [A-17], [Q-37]. The variants are physics-bounded ("to not hallucinate impossible ones"). Methods: energy-based SSL, Joint Energy Models, generative training that fills in missing parts, autoregressive and diffusion methods. Which families come first is held (D-14). Variants are mixed into the real training batches.
 
@@ -101,10 +108,10 @@ Run modes: train · evaluate · live inference · forensic replay · lab.
 **Forecast (per trigger)**
 - P_inf(k): infiltration probability over the next K steps, with uncertainty.
 - The predicted MITRE ATT&CK stage per step. The problem statement names Reconnaissance, Initial Access, Lateral Movement, Command & Control and Exfiltration; this extends to full Enterprise + ICS.
-- The top-N imagined attack paths with probabilities.
+- Up to N imagined attack paths (distinct routes) with probabilities (D-46).
 - A time-to-event hazard curve ("when").
 - Driving features per prediction (attention and attribution): flags, ports, flow patterns.
-- The compute spent (inference-time scaling).
+- The compute spent (inference-time scaling): K, N, loop passes R and descent steps (D-44).
 - The safe horizon, and observability-gap annotations.
 
 **Belief and trust**
@@ -125,6 +132,8 @@ Run modes: train · evaluate · live inference · forensic replay · lab.
 - For each: ΔP_inf, disruption cost, physical feasibility, and information value.
 
 **Verifier**
+- Trust score per forecast and per advice (value head, D-45).
+- Proposed calibration correction, applied only on a human command (policy head, D-45).
 - Calibration report (reliability, ECE, Brier).
 - Drift report per memory region.
 - Outcome–forecast ledger.
@@ -164,7 +173,7 @@ Run modes: train · evaluate · live inference · forensic replay · lab.
 | Forensics | replay on labelled incidents | stage-onset timing error, patient-zero accuracy, narrative step precision/recall |
 
 ## 8. Status of decisions (see `governance/decisions.py`)
-**Decided:** D-01, D-07, D-09 (the engineer's reading of the owner's words; to confirm), D-17 to D-23, D-30 to D-41.
+**Decided:** D-01, D-07, D-09 (the engineer's reading of the owner's words; to confirm), D-17 to D-23, D-30 to D-41, D-42 to D-46 (2026-09-30; D-44's one R per model is to confirm), D-47 and D-48 (2026-10-01).
 
 **Held (never default):**
 - D-02 trigger policy
@@ -174,7 +183,7 @@ Run modes: train · evaluate · live inference · forensic replay · lab.
 - D-06 standards
 - D-08 threat-model document
 - D-10 repo location
-- D-11a–c reconstruction target, energy jobs in v1, adversary objective
+- D-11a–c reconstruction target, energy jobs in v1 (TAAFT's own energy settled by D-42), adversary objective
 - D-12 TAAFT coupling
 - D-13 calibration adapters
 - D-14 Generator families

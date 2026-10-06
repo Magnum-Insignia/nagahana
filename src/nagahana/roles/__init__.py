@@ -1,1 +1,1 @@
-"""Role orchestrators and the output contracts they exchange."""
+"""Role interfaces over the working components, and the output contracts the roles exchange."""

@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from nagahana.core.errors import DecisionHeld, InvariantViolation, ModeViolation, NotBuiltYet
+from nagahana.core.errors import DecisionHeld, InvariantViolation, ModeViolation
 from nagahana.core.modes import RunMode, run_mode
 from nagahana.graph.hypergraph import HypergraphSnapshot
 from nagahana.models.cvgae.model import ENCODERS
@@ -108,12 +108,21 @@ def test_coupling_semantics_and_held_choice():
 
 
 def test_generator_and_lens_gates():
+    # D-14 stays held; the families run under assumption AS-27, so only strict mode blocks them.
+    from nagahana.governance.assumptions import strict_mode
+    from nagahana.models.config import preset
+    from nagahana.models.taaft.lenses import LensSpec
+
+    strict_mode(True)
+    try:
+        with pytest.raises(DecisionHeld):
+            GENERATORS.build("diffusion")
+    finally:
+        strict_mode(False)
     with pytest.raises(DecisionHeld):
-        GENERATORS.build("diffusion")
-    with pytest.raises(DecisionHeld):
-        LENSES.build("noise")
-    with pytest.raises(NotBuiltYet):
-        LENSES.build("belief-trust").analyse(None, None)
+        LENSES.build("noise")            # D-26 held: noise features live inside the information lens (AS-36)
+    cfg = preset("tiny")
+    assert LENSES.build("belief-trust", LensSpec(cfg=cfg.taaft, d_ctx=cfg.taaft.dim, n_planes=6)) is not None
     sampler = PhysicsBoundedSampler(family=None)
     with run_mode(RunMode.INFER_LIVE), pytest.raises(ModeViolation):
         sampler.sample(None, None)

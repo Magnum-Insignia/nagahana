@@ -1,0 +1,569 @@
+# Evaluation settings (src/nagahana/evaluation/config.py, docs/evaluation.md).
+# Generated from the EvaluationConfig dataclasses: python -m nagahana evaluate config --write
+# conf/evaluation/evaluation.yaml. Edit the dataclasses, then regenerate; a test checks that this file
+# equals the generated text. Every value is set; assumptions are documented in
+# docs/assumptions/evaluation.md.
+seed: 0
+resampling:
+  n_resamples: 2000
+  confidence: 0.95
+  interval: bca
+  jackknife_groups: 100
+  chunk_elements: 20000000
+  mean_block_length: null
+  heavy_resamples: 200
+schemes:
+  detection: stationary
+  forecast: stationary
+  state_forecast: stationary
+  stage: stationary
+  time_to_event: stationary
+  paths: cluster
+  timeliness: cluster
+  forensics: cluster
+  components: iid
+  explanations: stationary
+operating_point:
+  alpha: 0.001
+  detection: own
+  timeliness_own: own
+  missing_own: conformal
+  calibration_split: val
+  conformal_scope: dataset
+detection:
+  partial_auroc_max_fpr: 0.01
+  fixed_fprs:
+  - 0.001
+  - 0.01
+  deployment_base_rates:
+  - 0.001
+  - 0.01
+forecast:
+  horizons:
+  - '1'
+  - mid
+  - K
+  ece_bins: 10
+  ece_strategy: width
+  log_score_eps: null
+  climatology_scope: dataset
+  fair_crps: true
+  reliability_bins: 10
+  temperatures:
+  - 0.5
+  - 0.75
+  - 1.0
+  - 1.5
+  - 2.0
+timeliness:
+  late_horizons: 1.0
+  match_entity: true
+  window_start: horizon
+  quantiles:
+  - 0.1
+  - 0.25
+  - 0.75
+  - 0.9
+survival:
+  tied_times: exclude
+  interpolation: step
+  marker: survival
+  dcal_bins: 10
+stages:
+  top_k:
+  - 1
+  - 3
+  classes: union
+  ece_bins: 10
+  ace_ranges: 15
+paths:
+  top_n: 5
+  tolerance: 0.25
+  entity_rule: exact
+  include_empty: false
+comparisons:
+  fdr_method: bh
+  fdr_level: 0.05
+  mcnemar_mid_p: true
+  dm_lags: null
+  wilcoxon_zero_method: wilcox
+  permutations: 10000
+models:
+  primary: nagahana
+  lr_family:
+  - logistic_regression
+  display:
+    nagahana: \NagaHana{}
+    logistic_regression: LR
+    persistence: Persistence
+    climatology: Climatology
+    cyberworld: CyberWorld (RSSM)
+    flowtransformer: FlowTransformer
+forensics:
+  top_k: 3
+  tolerance_windows: 1.0
+  entity_rule: exact
+operations:
+  batches: 20
+arena:
+  min_seeds: 3
+  profile_points: 50
+  control: control
+protocols:
+  p1_split: zero_shot
+  p1_novelty: families_and_networks
+  p2_test_splits:
+  - test
+  - zero_shot
+  p3_site_benign_hours: 24.0
+  p3_site_analyst_alerts: 50
+  p4_reference_regime: full
+  p4_regimes:
+  - full
+  - flow_packet
+  - flow_only
+  - sampled
+  - encrypted
+  - untapped
+  p4_dataset: cse-cic-ids2018
+  p4_novelty: known
+  p5_corruptions:
+  - skew
+  - reorder
+  - drop
+  - dup
+  - spoof
+  - flood
+  p5_share: 0.1
+  p6_enabled_proposals: []
+  p6_miller_madow: true
+  p8_telemetry:
+  - full
+  - flow_only
+datasets:
+- id: cse-cic-ids2018
+  label: CSE-CIC-IDS2018
+  short: CIC-18
+  group: cse-cic-ids2018
+  time_unit: min
+  window_seconds: 60.0
+- id: ctu-13
+  label: CTU-13
+  short: CTU-13
+  group: ctu-13
+  time_unit: min
+  window_seconds: 60.0
+- id: cic-ids2017
+  label: CIC-IDS2017
+  short: CIC-17
+  group: cic-ids2017
+  time_unit: min
+  window_seconds: 60.0
+- id: unsw-nb15
+  label: UNSW-NB15
+  short: UNSW
+  group: unsw-nb15
+  time_unit: min
+  window_seconds: 60.0
+- id: cic-iot-2023
+  label: CIC-IoT-2023
+  short: CIC-IoT
+  group: cic-iot-2023
+  time_unit: min
+  window_seconds: 60.0
+- id: lanl
+  label: LANL
+  short: LANL
+  group: lanl
+  time_unit: h
+  window_seconds: 1800.0
+- id: swat
+  label: SWaT
+  short: SWaT
+  group: ot
+  time_unit: min
+  window_seconds: 30.0
+- id: wadi
+  label: WADI
+  short: WADI
+  group: ot
+  time_unit: min
+  window_seconds: 30.0
+- id: hai
+  label: HAI
+  short: HAI
+  group: ot
+  time_unit: min
+  window_seconds: 30.0
+- id: morris-gao-ics
+  label: Morris-Gao ICS
+  short: Morris-Gao
+  group: ot
+  time_unit: min
+  window_seconds: 30.0
+- id: ics-flow
+  label: ICS-Flow
+  short: ICS-Flow
+  group: ot
+  time_unit: min
+  window_seconds: 30.0
+- id: simulated
+  label: Simulated worlds
+  short: Simulated
+  group: simulated
+  time_unit: min
+  window_seconds: 60.0
+groups:
+- id: cse-cic-ids2018
+  label: CSE-CIC-IDS2018
+  short: CIC-18
+- id: ctu-13
+  label: CTU-13
+  short: CTU-13
+- id: cic-ids2017
+  label: CIC-IDS2017
+  short: CIC-17
+- id: unsw-nb15
+  label: UNSW-NB15
+  short: UNSW
+- id: cic-iot-2023
+  label: CIC-IoT-2023
+  short: CIC-IoT
+- id: lanl
+  label: LANL
+  short: LANL
+- id: ot
+  label: OT datasets
+  short: OT
+- id: simulated
+  label: Simulated worlds
+  short: Simulated
+headline:
+- id: f1kn
+  label: F1 score (\%), CSE-CIC-IDS2018, known families
+  protocol: P1
+  task: detection
+  metric: f1
+  group: cse-cic-ids2018
+  novelty: known
+  variant: ''
+  horizon: ''
+  test: mcnemar
+  percent: true
+  decimals: 2
+- id: f1nov
+  label: F1 score (\%), CSE-CIC-IDS2018, novel families
+  protocol: P1
+  task: detection
+  metric: f1
+  group: cse-cic-ids2018
+  novelty: novel
+  variant: ''
+  horizon: ''
+  test: mcnemar
+  percent: true
+  decimals: 2
+- id: aurocnov
+  label: AUROC (\%), CSE-CIC-IDS2018, novel families
+  protocol: P1
+  task: detection
+  metric: auroc
+  group: cse-cic-ids2018
+  novelty: novel
+  variant: ''
+  horizon: ''
+  test: delong
+  percent: true
+  decimals: 2
+- id: x1718
+  label: F1 score (\%), CIC-IDS2017 $\rightarrow$ CSE-CIC-IDS2018
+  protocol: P2
+  task: detection
+  metric: f1
+  group: cse-cic-ids2018
+  novelty: ''
+  variant: train=cic-ids2017
+  horizon: ''
+  test: mcnemar
+  percent: true
+  decimals: 2
+- id: x1817
+  label: F1 score (\%), CSE-CIC-IDS2018 $\rightarrow$ CIC-IDS2017
+  protocol: P2
+  task: detection
+  metric: f1
+  group: cic-ids2017
+  novelty: ''
+  variant: train=cse-cic-ids2018
+  horizon: ''
+  test: mcnemar
+  percent: true
+  decimals: 2
+- id: bsK
+  label: Brier score at the full horizon $K$
+  protocol: P1
+  task: forecast
+  metric: brier
+  group: all
+  novelty: known
+  variant: ''
+  horizon: K
+  test: diebold_mariano
+  percent: false
+  decimals: 3
+- id: lt
+  label: Median lead time (min), CSE-CIC-IDS2018
+  protocol: P7
+  task: timeliness
+  metric: median_lead_time
+  group: cse-cic-ids2018
+  novelty: known
+  variant: ''
+  horizon: ''
+  test: wilcoxon
+  percent: false
+  decimals: 1
+ablation_columns:
+- id: kn
+  label: known
+  base: P1
+  task: detection
+  metric: f1
+  group: cse-cic-ids2018
+  novelty: known
+  variant: ''
+  horizon: ''
+  scale: 100.0
+  decimals: 2
+- id: nov
+  label: novel
+  base: P1
+  task: detection
+  metric: f1
+  group: cse-cic-ids2018
+  novelty: novel
+  variant: ''
+  horizon: ''
+  scale: 100.0
+  decimals: 2
+- id: cr
+  label: cross
+  base: P2
+  task: detection
+  metric: f1
+  group: cse-cic-ids2018
+  novelty: ''
+  variant: train=cic-ids2017
+  horizon: ''
+  scale: 100.0
+  decimals: 2
+- id: ap
+  label: novel
+  base: P1
+  task: detection
+  metric: auprc
+  group: cse-cic-ids2018
+  novelty: novel
+  variant: ''
+  horizon: ''
+  scale: 100.0
+  decimals: 2
+- id: bs
+  label: $\times10^{-3}$
+  base: P1
+  task: forecast
+  metric: brier
+  group: all
+  novelty: known
+  variant: ''
+  horizon: K
+  scale: 1000.0
+  decimals: 1
+- id: lt
+  label: min
+  base: P1
+  task: timeliness
+  metric: median_lead_time
+  group: cse-cic-ids2018
+  novelty: known
+  variant: ''
+  horizon: ''
+  scale: 0.016666666666666666
+  decimals: 1
+ablations:
+- id: INF-R1
+  tier: inference
+  component: TSTCT and TAAFT loops
+  removal: one thinking pass (R = 1)
+  thesis_id: ''
+- id: INF-D0
+  tier: inference
+  component: TAAFT energy refinement
+  removal: no descent steps
+  thesis_id: A8
+- id: INF-ENV
+  tier: inference
+  component: Environment memory
+  removal: TSTCT reads only the current window
+  thesis_id: ''
+- id: INF-LTM
+  tier: inference
+  component: Long-term memory
+  removal: long-term memory not read
+  thesis_id: ''
+- id: INF-PHYS
+  tier: inference
+  component: Physics boundary
+  removal: Phi_phys term and hard limits off at inference
+  thesis_id: ''
+- id: INF-N1
+  tier: inference
+  component: Forecaster routes
+  removal: one imagined route (N = 1)
+  thesis_id: ''
+- id: SS-LENS-BELIEF_TRUST
+  tier: single_stage
+  component: TAAFT lens
+  removal: belief_trust term removed from E_total
+  thesis_id: ''
+- id: SS-LENS-GAME
+  tier: single_stage
+  component: TAAFT lens
+  removal: game term removed from E_total
+  thesis_id: ''
+- id: SS-LENS-INFORMATION
+  tier: single_stage
+  component: TAAFT lens
+  removal: information term removed from E_total
+  thesis_id: ''
+- id: SS-LENS-TOPOLOGY
+  tier: single_stage
+  component: TAAFT lens
+  removal: topology term removed from E_total
+  thesis_id: ''
+- id: SS-LENS-TIME
+  tier: single_stage
+  component: TAAFT lens
+  removal: time term removed from E_total
+  thesis_id: ''
+- id: SS-LENS-CAUSE
+  tier: single_stage
+  component: TAAFT lens
+  removal: cause term removed from E_total
+  thesis_id: ''
+- id: SS-CAUSAL
+  tier: single_stage
+  component: TSTCT causal heads
+  removal: causal heads off
+  thesis_id: ''
+- id: SS-GEN
+  tier: single_stage
+  component: Generator
+  removal: no Generator variants in training
+  thesis_id: A10
+- id: SS-NOPRE
+  tier: single_stage
+  component: TAAFT pretraining
+  removal: Stage 2 TAAFT pretraining skipped
+  thesis_id: ''
+- id: SS-REWARD
+  tier: single_stage
+  component: Process rewards
+  removal: outcome-only rewards
+  thesis_id: A11
+- id: SS-COUPLING
+  tier: single_stage
+  component: TAAFT and heads coupling
+  removal: joint or separate instead of staged
+  thesis_id: A12
+- id: FR-PLANES1
+  tier: full
+  component: CVG-AE planes
+  removal: one plane instead of six
+  thesis_id: ''
+- id: FR-NOTEMP
+  tier: full
+  component: TSTCT temporal heads
+  removal: no temporal heads
+  thesis_id: ''
+- id: FR-PAIRWISE
+  tier: full
+  component: Hypergraph
+  removal: pairwise graph instead of hyperedges
+  thesis_id: A1
+- id: FR-COUPLING0
+  tier: full
+  component: Cross-plane coupling
+  removal: coupling omega_pq = 0
+  thesis_id: A2
+- id: FR-DETERMINISTIC
+  tier: full
+  component: Variational latent
+  removal: deterministic encoder
+  thesis_id: A3
+- id: FR-CONTINUOUS
+  tier: full
+  component: Categorical latent factors
+  removal: continuous-only latent
+  thesis_id: A4
+- id: FR-NOPHYSICS
+  tier: full
+  component: Physics boundary
+  removal: no physics term and no hard limits in training
+  thesis_id: A5
+- id: FR-ZEROFILL
+  tier: full
+  component: Observation status
+  removal: zero-filling instead of status
+  thesis_id: A6
+- id: FR-NOCAUSALTOPO
+  tier: full
+  component: Causal heads and topology bias
+  removal: both removed
+  thesis_id: A7
+- id: FR-FULLOBS
+  tier: full
+  component: Partial observability
+  removal: full observability assumed
+  thesis_id: A9
+- id: FR-STATIC
+  tier: full
+  component: Dynamics
+  removal: static head on the same encoder
+  thesis_id: A13
+multidataset:
+- id: f1
+  task: detection
+  metric: f1
+  higher_is_better: true
+  horizon: ''
+- id: auprc
+  task: detection
+  metric: auprc
+  higher_is_better: true
+  horizon: ''
+- id: auroc
+  task: detection
+  metric: auroc
+  higher_is_better: true
+  horizon: ''
+- id: brier_K
+  task: forecast
+  metric: brier
+  higher_is_better: false
+  horizon: K
+- id: crps_K
+  task: forecast
+  metric: crps
+  higher_is_better: false
+  horizon: K
+- id: c_index
+  task: time_to_event
+  metric: c_index
+  higher_is_better: true
+  horizon: ''
+- id: macro_f1
+  task: stage
+  metric: macro_f1
+  higher_is_better: true
+  horizon: ''

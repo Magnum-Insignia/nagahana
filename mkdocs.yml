@@ -22,3 +22,6 @@ nav:
       - 0004 Human-gated Verifier: adr/0004-human-gated-verifier.md
       - 0005 Threat-model scope: adr/0005-threat-model-scope.md
       - 0006 Training pipeline: adr/0006-training-pipeline.md
+      - 0007 TAAFT energy from lens terms: adr/0007-taaft-energy-from-lens-terms.md
+      - 0008 Weight-tied looping: adr/0008-weight-tied-looping.md
+      - 0009 Group addresses and entity identity: adr/0009-group-addresses-and-entity-identity.md

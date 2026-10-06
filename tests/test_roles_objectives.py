@@ -30,7 +30,7 @@ STAGES = tuple(AttackStage)
 def _bundle(p_inf):
     k = len(p_inf)
     row = tuple([1.0] + [0.0] * (len(STAGES) - 1))
-    return ForecastBundle(tuple(p_inf), tuple(row for _ in range(k)), STAGES, (), (), ComputeRecord(8, k, 0, 0.1))
+    return ForecastBundle(tuple(p_inf), tuple(row for _ in range(k)), STAGES, (), (), ComputeRecord(8, k, 0, 0.1, 1, 1))
 
 
 def test_forecast_bundle_invariants():

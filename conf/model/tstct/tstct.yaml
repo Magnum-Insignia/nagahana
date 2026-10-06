@@ -1,7 +1,52 @@
-# TSTCT (src/nagahana/models/tstct).
-layers: ???
-heads: {spatial: ???, temporal: ???, causal: ???}
-head_dim: ???
-time_encoding_periods: ???     # number of periodic components in τ(Δt)
-causal_structure: ???          # method for learning sparse cause → effect links (not yet specified)
-pretraining_objective: ???     # stage 3; tied to D-11a
+# TSTCT (build-spec section 2.5). (models/config/components.py, TSTCTConfig).
+# Generated from the typed dataclasses by nagahana.core.config.generate_conf (D-57). Do not edit by hand:
+# change the dataclass default and regenerate; tests compare this file with the code.
+tstct:
+  # [build-spec section 4] model width
+  dim: 1024
+  # [build-spec section 4] pre-norm blocks
+  blocks: 16
+  # [build-spec section 4] attention heads per block
+  heads: 16
+  # [AS-09] spatial heads
+  spatial_heads: 4
+  # [AS-09] temporal heads
+  temporal_heads: 8
+  # [AS-09] causal heads
+  causal_heads: 4
+  # [AS-32] SwiGLU hidden width
+  mlp_hidden: 2816
+  # [build-spec section 2.5] last states of the same entity read by temporal heads
+  temporal_window: 512
+  # [build-spec section 2.5] neighbours' latest states read by spatial heads (hop <= 2)
+  spatial_keys: 64
+  # [AS-10] top-k causal candidates kept by the gate
+  causal_keys: 32
+  # [AS-10] largest cause-to-effect lag considered, seconds
+  causal_lag_s: 300.0
+  # [D-49] shortest rotary period, seconds
+  rotary_p_min: 0.001
+  # [D-49] longest rotary period, seconds (one week)
+  rotary_p_max: 604800.0
+  # [D-49] log-delta-t bias buckets
+  delta_buckets: 32
+  # [AS-07] R = 1 + Poisson(mean) in training, clipped to max_passes
+  train_passes_mean: 3.0
+  # [AS-07] largest R drawn in training
+  max_passes: 8
+  # [AS-07] truncated backpropagation through the last passes
+  grad_passes: 2
+  # [AS-08, D-44] run-time default R, recorded with every forecast
+  default_passes: 4
+  # [D-49] first width of the log-delta-t and log-age bias buckets, seconds
+  delta0_s: 0.001
+  # [AS-151] most recent causal candidates scored by the gate per query
+  causal_candidate_cap: 256
+  # [AS-152] hidden width of the causal gate MLP per causal head
+  gate_hidden: 64
+  # [AS-152] initial gate logit (sigmoid(2) is about 0.88: gates start almost open)
+  gate_bias_init: 2.0
+  # [AS-153] periodic frequencies of the delta-t encoding (gate and prior)
+  dt_frequencies: 8
+  # [AS-160] times within 100 ns are simultaneous in as-of and strict-order tests
+  time_tie_s: 1.0e-07

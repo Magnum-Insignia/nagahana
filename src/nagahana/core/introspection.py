@@ -1,23 +1,25 @@
-"""Introspection hooks (module named `introspection` so it never shadows the stdlib `inspect`): the owner's "open the model's brain" [Q-17], ARCH #7 and #22.
+"""Introspection hooks: record what named submodules produce during a forward pass.
+
+The module is named `introspection` so that it never shadows the standard library's `inspect`.
 
 What this is
 ------------
 `ActivationRecorder` attaches forward hooks to named submodules and keeps what each one produced
-during a forward pass. It is the lowest layer of the trust/inspection stack:
-- mechanistic analysis (P-16): probes on latents; checks that interventions have the expected
+during a forward pass. It is the lowest layer of the inspection stack:
+- mechanistic analysis (P-16): probes on latents and checks that interventions have the expected
   effect;
-- explainability required by the problem statement: attention weights and feature attribution
-  per prediction ("black-box outputs without interpretability are not acceptable");
-- the "brain surgery" sandbox: run one input and see every intermediate result.
+- the explainability the problem statement requires: attention weights and feature attribution per
+  prediction (black-box outputs are not acceptable);
+- step-by-step inspection: run one input and see every intermediate result.
 
 Design notes
 ------------
-- **Opt-in and bounded.** Nothing is recorded unless a recorder is active. `max_items` caps memory
-  use, because CII-scale inputs are large.
-- **Detached copies.** Recorded tensors are detached (and optionally moved to CPU), so inspection
-  never changes gradients or training.
-- **Names, not indices.** Modules are selected by their qualified names from
-  `model.named_modules()`, so recordings stay readable as architectures change.
+- Opt-in and bounded. Nothing is recorded unless a recorder is active; `max_items` caps memory use,
+  because inputs at CII scale are large.
+- Detached copies. Recorded tensors are detached (and optionally moved to CPU), so inspection never
+  changes gradients or training.
+- Names, not indices. Modules are selected by their qualified names from `model.named_modules()`, so
+  recordings stay readable as architectures change.
 
 Example
 -------
@@ -46,10 +48,10 @@ class ActivationRecorder:
     model:
         The module to inspect.
     names:
-        Qualified submodule names (as in `model.named_modules()`). Unknown names raise at entry, so
-        a typo cannot silently record nothing.
+        Qualified submodule names (as in `model.named_modules()`). Unknown names raise at entry, so a
+        typo cannot silently record nothing.
     to_cpu:
-        Move recorded tensors to CPU (keeps GPU memory free during long inspections).
+        Move recorded tensors to CPU (keeps accelerator memory free during long inspections).
     max_items:
         Maximum number of recorded outputs per module (oldest dropped first).
     """
@@ -72,6 +74,7 @@ class ActivationRecorder:
         self._handles: list[torch.utils.hooks.RemovableHandle] = []
 
     def _capture(self, value: Any) -> Any:
+        # Detach tensors (and move them to CPU when asked); recurse through tuples, lists and dicts.
         if isinstance(value, torch.Tensor):
             out = value.detach()
             return out.cpu() if self.to_cpu else out
@@ -85,7 +88,7 @@ class ActivationRecorder:
         modules = dict(self.model.named_modules())
         missing = [n for n in self.names if n not in modules]
         if missing:
-            raise KeyError(f"Unknown submodule names: {missing}. Known: {sorted(modules)[:20]} …")
+            raise KeyError(f"Unknown submodule names: {missing}. Known (first 20): {sorted(modules)[:20]}")
         for name in self.names:
             self.records[name] = []
 

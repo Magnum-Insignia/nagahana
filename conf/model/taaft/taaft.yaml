@@ -1,11 +1,70 @@
-# TAAFT (src/nagahana/models/taaft).
-lenses: [belief-trust, energy, game, information, topology, temporal, causal]
-# Lenses gated by held decisions (add only after the decision): mechanism-design (D-24), noise (D-26).
-policy_coupling: ???           # held: D-12 (joint / separate / staged)
-energy:
-  refinement_steps: ???        # inference-time scaling knob
-  step_size: ???
-  noise_schedule: ???
-  v1_jobs: ???                 # held: D-11b
-suspicion_floor: ???           # assume-breach floor, strictly in (0, 1)
-pretraining_objectives: ???    # stage 4 self-supervised objectives (not yet specified)
+# TAAFT (build-spec section 2.7). (models/config/components.py, TAAFTConfig).
+# Generated from the typed dataclasses by nagahana.core.config.generate_conf (D-57). Do not edit by hand:
+# change the dataclass default and regenerate; tests compare this file with the code.
+taaft:
+  # [build-spec section 4] model width
+  dim: 1024
+  # [build-spec section 4] decoder-style blocks
+  blocks: 34
+  # [build-spec section 4] attention heads per block
+  heads: 16
+  # [AS-32] SwiGLU hidden width
+  mlp_hidden: 2816
+  # [D-49, build-spec section 2.7] G_adv adversary-hypothesis slots (learned slot embeddings)
+  adversary_slots: 16
+  # [AS-14] d_y, hypothesis width
+  d_hyp: 256
+  # [AS-13, AS-37] Environment states of the entity itself read per trigger
+  own_states: 32
+  # [AS-13, AS-37] neighbours' latest states read per trigger
+  neighbour_states: 64
+  # [AS-14] hidden width of the lens energy networks
+  lens_hidden: 1024
+  # [D-44] run-time descent steps S, recorded with every forecast
+  descent_steps: 8
+  # [AS-14] assume-breach floor of the compromise readout, strictly in (0, 1)
+  suspicion_floor: 0.01
+  # [AS-15, D-37] weight of the shared physics term Phi_phys; TAAFT's E_total and every component loss read this one value
+  lambda_phys: 0.1
+  # [AS-16] probability of the null-context reading per training window (P-09 two readings)
+  context_dropout: 0.1
+  # [P-13] adversary goal classes
+  n_goals: 8
+  # [P-13] adversary types: opportunistic, targeted, insider
+  n_types: 3
+  # [AS-08, D-44] run-time default R, recorded with every forecast
+  default_passes: 4
+  # [D-42, AS-14] lens terms of E_total; physics is always added with lambda_phys; 'mechanism-design' and 'noise' are own terms only under their D-24 and D-26 options
+  lenses: [belief-trust, game, information, topology, temporal, causal]
+  # [AS-13, AS-217] M_im read by the belief recursion; equals MemoryConfig.imagination_triggers
+  imagination_triggers: 8
+  # [AS-200] share of self-attention heads rotated by trigger time
+  self_rotary_fraction: 0.5
+  # [AS-07] truncated backpropagation through the last thinking passes
+  grad_passes: 2
+  # [AS-13, AS-201] gathered (inference layout) or dense (masked, same function)
+  cross_layout: gathered
+  # [D-49] log-delta-t buckets for trigger gaps, key ages and entity ages
+  delta_buckets: 32
+  # [AS-16] initial descent step alpha, learned through softplus
+  descent_step_init: 0.1
+  # [AS-212] sigma_0 of the annealed descent noise sigma_i = sigma_0 (1 - i / S)
+  descent_noise: 0.01
+  # [AS-219] pairwise and game subspaces have rank d_hyp // divisor
+  lens_rank_divisor: 4
+  # [AS-205] periodogram frequency grid size
+  noise_frequencies: 64
+  # [AS-205] shortest period on the grid, seconds
+  noise_period_min: 1.0
+  # [AS-205] longest period on the grid, seconds
+  noise_period_max: 3600.0
+  # [AS-205] Hurst block sizes 1, 2, 4, ..., 2^(scales - 1)
+  noise_scales: 8
+  # [AS-205] events needed before a periodogram counts as evidence
+  noise_min_events: 8
+  # [AS-205] blocks needed at a scale before its variance enters the Hurst fit
+  noise_min_blocks: 4
+  # [AS-210] EMA momentum of each lens's reference energy
+  reference_momentum: 0.99
+  # [AS-220] learned probe queries read from the long-term memory as extra cross keys
+  memory_probes: 32

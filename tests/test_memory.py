@@ -1,12 +1,13 @@
 """Memory: access matrix, region enforcement, retention by trigger only, cache compatibility, event log."""
 
 import pytest
+import torch
 
 from nagahana.core.errors import AccessDenied, InvariantViolation, ProposalNotEnabled
 from nagahana.core.roles import Role
 from nagahana.memory.access import Op, Region, allowed, check
 from nagahana.memory.eventlog import HashChainLog
-from nagahana.memory.kvcache import KVCacheMeta, assert_compatible
+from nagahana.memory.kvcache import CACHE_DTYPE, CACHE_ELEMENT_BYTES, KVCacheMeta, assert_compatible
 from nagahana.memory.regions import DictStore, MemoryRegion
 from nagahana.memory.retention import ConstantRetention
 
@@ -46,6 +47,9 @@ def test_retention_depends_on_trigger_index_only():
 def test_kv_cache_refuses_other_weights():
     meta = KVCacheMeta(Region.ENVIRONMENT, "tstct", "a" * 64, "z-v0", "0.1", 2, 4, 16)
     assert meta.bytes_per_position(2) == 2 * 2 * 4 * 16 * 2
+    # D-54: caches are stored in fp32, so the default element size is 4 bytes.
+    assert CACHE_DTYPE is torch.float32 and CACHE_ELEMENT_BYTES == torch.finfo(CACHE_DTYPE).bits // 8 == 4
+    assert meta.bytes_per_position() == 2 * 2 * 4 * 16 * 4
     assert_compatible(meta, model_hash="a" * 64, latent_space="z-v0")
     with pytest.raises(InvariantViolation):
         assert_compatible(meta, model_hash="b" * 64, latent_space="z-v0")

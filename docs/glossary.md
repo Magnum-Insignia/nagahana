@@ -8,6 +8,8 @@
 | **transition** | The change a state update causes. |
 | **observation status** | Evidence status of a field: observed, stale, low reliability, not supplied, not observable (P-03). Absence ≠ zero (D-41). |
 | **heterogeneous multiplex hypergraph** | The world as typed entities, several relation planes, and hyperedges joining ≥ 2 entities (D-39). |
+| **group address** | A destination that names a group of machines (multicast, or a broadcast). Its entity kind is `multicast` (D-47). |
+| **alias** | Another address of the same machine, merged into its entity; e.g. an IPv6 link-local address, matched through the Ethernet address that ARP shows (D-48). |
 | **relation plane** | One relation layer of the hypergraph, e.g. connectivity or identity. Planes are the model's "vertical" parallel branches [A-01]. |
 | **relation-specific parallel branches** | Proposed standard term for the owner's "MIMD-type" architecture (P-08). |
 | **CVG-AE** | Complex Variational Graph AutoEncoder: the encoder and latent-space generator [A-11]. |

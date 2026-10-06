@@ -1,32 +1,29 @@
-"""Policy/value heads for the Forecaster and the Advisor (templates), and the coupling question (D-12).
+"""How the policy/value heads of the Forecaster and the Advisor read TAAFT: the coupling of D-12.
 
 Two agents, one latent space
 ----------------------------
-- **Forecaster heads**: the adversary's policy π_A and value V_φ. They plan as the adversary would,
-  by MPC-guided model-based RL [Q-28], over K steps × N samples [A-06], [A-14]. The Forecaster's
-  receding-horizon objective (diagram 06):
-      a^A_{t:t+H−1} = argmax E[ Σ_{k<H} γ^k r^A_{t+k} + γ^H V_φ(z_{t+H}) ],   H ≤ K
-  What the modelled attacker optimises (r^A) is held (D-11c). P_inf(k) needs the definition of an
-  infiltration state (D-03a).
-- **Advisor heads**: the defender's policy π_D over D3FEND counter-measures, and its value. "another
-  agent/policy-value pair that directly works on both env & imagination to produce counters"
-  [A-15], [A-20]. Its objective aggregates over adversary policies (D-03c) and prices disruption
-  (D-03b). Both are held.
+- Forecaster heads (`models/forecaster/model.py`): the adversary's policy pi_A and value V_phi. They plan
+  as the adversary would, by MPC-guided model-based RL ([Q-28]), over K steps along at most N routes
+  (D-30, D-46). The receding-horizon objective:
+      a^A_(t:t+H-1) = argmax E[ sum over k < H of gamma^k r^A_(t+k) + gamma^H V_phi(z_(t+H)) ],   H <= K
+- Advisor heads (`models/advisor/model.py`): the defender's policy pi_D over D3FEND counter-measures and
+  its value, re-imagined against the Forecaster's adversary ([A-15], [A-20]).
+Both agents own their heads; this module holds what they share: how their inputs read TAAFT.
 
-The coupling question (D-12, the owner's open analysis [A-19] item 4)
----------------------------------------------------------------------
-"if we keep the transformer and policy/value separate then we can penalize its intuition about
-adversarial analysis & threat hunting, and forecasting separately otherwise we can conjoin"
-- **JOINT**: one model trained end to end. Shared representation (as in MuZero, refs.md#L437). The
-  risk is gradient conflict between analysis and forecasting objectives; mitigations such as
-  gradient surgery exist.
-- **SEPARATE**: heads read TAAFT features through a stop-gradient. Analysis and forecasting are
-  penalised separately (the owner's stated wish). The risk is that the representation lacks what
-  the heads need.
-- **STAGED**: separate first (stage 5 trains heads on a frozen TAAFT), then a light joint
-  fine-tune. The 6-stage pipeline already supports this [I-01].
+The coupling (D-12, held; option in force from `governance.decisions`)
+----------------------------------------------------------------------
+- JOINT: one model trained end to end; head losses reshape TAAFT (a shared representation, as in
+  MuZero, Schrittwieser et al., Nature 2020). The risk is gradient conflict between analysis and
+  forecasting objectives.
+- SEPARATE: heads read TAAFT through a stop-gradient, so analysis and forecasting are penalised
+  separately [A-19]; the risk is that the representation lacks what the heads need.
+- STAGED (working option, AS-22): separate first (the first part of stage 5 trains the heads on a
+  stop-gradient TAAFT), then a joint fine-tune.
 
-`head_input` implements what each option *means*. Choosing one stays with the owner.
+`head_input` implements what each option means. `coupling_in_force` resolves the option through
+`decisions.require("taaft-policy-coupling")`: the run's configured option, else the working option of
+AS-22. `PolicyValueHead` is the handle on one agent's working heads that applies the coupling and switches
+the STAGED phase.
 """
 
 from __future__ import annotations
@@ -36,23 +33,33 @@ import enum
 import torch
 from torch import nn
 
-from nagahana.core.errors import NotBuiltYet
+from nagahana.core.errors import InvariantViolation
 from nagahana.governance import decisions
 
 
 class Coupling(enum.Enum):
-    """Options for D-12."""
+    """The admissible options of D-12 (values equal the option strings of the decision registry)."""
 
     JOINT = "joint"
     SEPARATE = "separate"
     STAGED = "staged"
 
 
-def decided_coupling() -> Coupling:
-    """The owner's decision for D-12; raises `DecisionHeld` until then."""
-    d = decisions.require("taaft-policy-coupling")
+def coupling_in_force(configured: str | None = None) -> Coupling:
+    """The D-12 option in force: `configured`, else the run's configured option, else STAGED (AS-22)."""
+    d = decisions.require("taaft-policy-coupling", configured, by=__name__)
     assert d.value is not None
     return Coupling(d.value)
+
+
+def decided_coupling() -> Coupling:
+    """The coupling in force (kept name): the decided value of D-12 once decided, its configured option until then."""
+    return coupling_in_force()
+
+
+def assumed_coupling() -> Coupling:
+    """The coupling the agents read TAAFT under (kept name of `coupling_in_force`, used by both agents)."""
+    return coupling_in_force()
 
 
 def head_input(features: torch.Tensor, coupling: Coupling, *, joint_phase: bool = False) -> torch.Tensor:
@@ -69,16 +76,49 @@ def head_input(features: torch.Tensor, coupling: Coupling, *, joint_phase: bool 
     return features if joint_phase else features.detach()
 
 
-class PolicyValueHead(nn.Module):
-    """Template for both agents. `agent` is "forecaster" or "advisor"."""
+class PolicyValueHead:
+    """The handle on one agent's working policy/value heads and the coupling they read TAAFT under.
 
-    def __init__(self, *, agent: str, **config: object) -> None:
-        super().__init__()
-        if agent not in ("forecaster", "advisor"):
-            raise ValueError("agent must be 'forecaster' or 'advisor'")
+    The heads themselves live in the agent's model (`Forecaster`, `Advisor`); both read TAAFT through
+    `head_input(..., coupling_in_force(), joint_phase=module.joint_phase)`. This handle gives training
+    one place to read the option in force and to switch the STAGED phase of either agent.
+
+    Parameters
+    ----------
+    agent: "forecaster" or "advisor".
+    module: the agent's model; it must expose the boolean attribute `joint_phase`.
+    """
+
+    AGENTS = ("forecaster", "advisor")
+
+    def __init__(self, *, agent: str, module: nn.Module) -> None:
+        if agent not in self.AGENTS:
+            raise ValueError(f"agent must be one of {self.AGENTS}")
+        if not isinstance(getattr(module, "joint_phase", None), bool):
+            raise InvariantViolation(f"the {agent} module must expose a boolean `joint_phase` (the STAGED switch)")
         self.agent = agent
-        self.config = dict(config)
+        self.module = module
 
-    def forward(self, *args: object, **kwargs: object) -> object:
-        waits = ("D-12", "D-11c", "D-03a") if self.agent == "forecaster" else ("D-12", "D-03a", "D-03b", "D-03c")
-        raise NotBuiltYet(f"{self.agent} policy/value heads (MPC-guided model-based RL)", waiting_on=waits)
+    @property
+    def coupling(self) -> Coupling:
+        """The D-12 option in force."""
+        return coupling_in_force()
+
+    @property
+    def joint_phase(self) -> bool:
+        """Whether the STAGED coupling is in its joint fine-tune."""
+        return bool(getattr(self.module, "joint_phase"))
+
+    def set_joint_phase(self, joint: bool) -> None:
+        """Switch the STAGED phase: False reads TAAFT through a stop-gradient, True fine-tunes jointly.
+
+        Meaningful only under STAGED; under JOINT or SEPARATE the option alone decides the gradient path,
+        so a switch request there raises rather than doing nothing silently.
+        """
+        if self.coupling is not Coupling.STAGED:
+            raise InvariantViolation(f"the joint phase applies to the STAGED coupling; the option in force is {self.coupling.value!r}")
+        setattr(self.module, "joint_phase", bool(joint))
+
+    def read(self, features: torch.Tensor) -> torch.Tensor:
+        """TAAFT features as this agent's heads see them under the coupling in force."""
+        return head_input(features, self.coupling, joint_phase=self.joint_phase)

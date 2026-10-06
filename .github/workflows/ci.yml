@@ -1,0 +1,65 @@
+# Continuous integration: lint, static types and the CPU test suite on every push to main and on
+# every pull request. Tests marked "gpu" need a CUDA device and are deselected here; tests marked
+# "slow" run in the scheduled job only.
+
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 21 * * *"          # nightly full run (03:00 IST), including slow tests
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: lint and types
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install CPU PyTorch
+        run: python -m pip install --upgrade pip && pip install torch --index-url https://download.pytorch.org/whl/cpu
+      - name: Install the package with its test extras
+        run: pip install -e ".[dev,data,pcap,baselines]" jax equinox
+      - name: Ruff
+        run: python -m ruff check src tests tools
+      - name: Mypy
+        run: python -m mypy
+
+  tests:
+    name: tests (python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install CPU PyTorch
+        run: python -m pip install --upgrade pip && pip install torch --index-url https://download.pytorch.org/whl/cpu
+      - name: Install the package with its test extras
+        run: pip install -e ".[dev,data,pcap,baselines]" jax equinox
+      - name: Tests on push and pull request (CPU, slow tests deselected)
+        if: github.event_name != 'schedule'
+        run: python -m pytest -o addopts="" -q -p no:cacheprovider -m "not gpu and not slow"
+      - name: Tests on the nightly schedule (CPU, including slow tests)
+        if: github.event_name == 'schedule'
+        run: python -m pytest -o addopts="" -q -p no:cacheprovider -m "not gpu"

@@ -8,17 +8,24 @@ __pycache__/
 .pytest_cache/
 .hypothesis/
 
-# Data and artefacts (versioned with DVC, never with git)
-data/
-outputs/
-checkpoints/
-mlruns/
+# Data and artefacts at the repository root (versioned with DVC, never with git). The rules are
+# anchored with a leading slash so they never match source packages such as src/nagahana/data/.
+/data/
+/outputs/
+/checkpoints/
+/mlruns/
 *.pcap
 *.pcapng
 *.parquet
 
 # Docs build
-site/
+/site/
 
-# The owner's verbatim statements stay in the private workspace
+# Official code of published baselines, fetched by tools/third_party (D-55); not part of the package
+/third_party/
+
+# Private notes stay out of the repository
 docs/sources/quotes.md
+
+# Tests are not published
+/tests/

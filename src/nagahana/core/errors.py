@@ -1,25 +1,23 @@
 """Exceptions that carry the project's rules.
 
-What this is
-------------
-Many of NagaHana's constraints are *governance* rules, not maths:
-- nothing undecided may be silently defaulted [Q-39];
-- the Verifier changes weights only on a human's command [A-16, A-21];
-- the Generator exists only in training [A-02, Q-37];
-- memory regions have owners [Q-31, Q-32].
+Several of NagaHana's constraints are governance rules rather than mathematics:
+
+- an undecided design question is never silently defaulted: a held decision resolves only to its
+  recorded working option or to an option configured for the run (governance/decisions.py);
+- the Verifier changes weights only under an explicit human command (D-21);
+- the Generator runs only in training (D-40);
+- memory regions have owners (D-35).
 
 Each rule is enforced by raising one of the exceptions below. Every message names what the code
-is waiting on, so a failure reads as an instruction ("decide D-12", "enable proposal P-18"),
+needs (a decision ID, a proposal ID, a configured option), so a failure reads as an instruction and
 never as a mystery.
 
 Design notes
 ------------
-- `NotBuiltYet` subclasses `NotImplementedError` so linters and IDEs treat template bodies as
-  intentionally unimplemented. It additionally records *why*: the decision IDs, proposal IDs or
-  pipeline stage it waits on. This keeps the template honest (CLAUDE.md: "no manipulations, mocks
-  or faking of work").
 - All exceptions derive from `NagaHanaError`, so callers can catch "a project rule fired" in one
   place (for example the CLI, which prints them as to-do items).
+- `NotBuiltYet` subclasses `NotImplementedError` and records what a body waits on. It is kept so that
+  modules importing it keep working; no normal path of the model raises it.
 """
 
 from __future__ import annotations
@@ -32,18 +30,30 @@ class NagaHanaError(Exception):
 
 
 class DecisionHeld(NagaHanaError):
-    """A code path needs a design decision the owner has not made (or is holding).
+    """A code path needs a design decision that cannot be resolved here.
 
-    Raised by `nagahana.governance.decisions.require`. The fix is always to decide and then record
-    the decision (registry + DESIGN_LOG.md), never to pick a default in place [Q-39].
+    Raised by `nagahana.governance.decisions.require` for a proposal (proposals are gated with
+    `require_proposal`), for a superseded entry, and for a held entry that has neither a recorded
+    working option nor an option configured for the run. Raised by
+    `nagahana.governance.assumptions.assume` in strict (audit) mode, which runs the code as if every
+    working assumption were still held.
+    """
+
+
+class InvalidOption(NagaHanaError):
+    """A configured option is not admissible.
+
+    Raised when a run configures an option that a decision does not list, or when a component is
+    built under an option it does not implement (for example a lens that exists only when its
+    placement option says so).
     """
 
 
 class ProposalNotEnabled(NagaHanaError):
-    """A component implements a proposal (P-xx) that has not been enabled.
+    """A component implements a proposal (P-xx) that has not been enabled for this run.
 
-    Proposals are engineering suggestions awaiting the owner's approval (DESIGN_LOG.md §3). Their
-    code may exist, but it runs only when the proposal ID is listed in `enabled_proposals`.
+    Proposal code exists in the tree but runs only when the proposal ID is listed in the run's
+    `enabled_proposals`.
     """
 
 
@@ -54,14 +64,13 @@ class AccessDenied(NagaHanaError):
 class HumanCommandRequired(NagaHanaError):
     """A model-changing operation was attempted without an explicit human command.
 
-    The Verifier "will only adjust model's weights based on human's supervised command to do so,
-    otherwise it wont" [A-21]. Automatic feedback into the Forecaster was removed because "it
-    would conduct the poisoning again" [A-16].
+    The Verifier adjusts weights or calibrations only under a supervised human command (D-21); an
+    automatic feedback path would let poisoned telemetry steer the model.
     """
 
 
 class ModeViolation(NagaHanaError):
-    """A component was used in a run mode it does not belong to (e.g. Generator at inference)."""
+    """A component was used in a run mode it does not belong to (e.g. the Generator at inference)."""
 
 
 class ConfigMissing(NagaHanaError):
@@ -73,15 +82,15 @@ class InvariantViolation(NagaHanaError):
 
 
 class NotBuiltYet(NotImplementedError):
-    """A template body that is intentionally not implemented yet.
+    """A body that is not available, with the items it waits on.
 
     Parameters
     ----------
     what:
-        What is not built, in plain words ("CVG-AE hypergraph encoder forward pass").
+        What is not available, in plain words.
     waiting_on:
-        Decision IDs (D-xx), proposal IDs (P-xx) or pipeline stages ("stage-1 analysis") that
-        must be settled first. May be empty when the only blocker is engineering time.
+        Decision IDs (D-xx), proposal IDs (P-xx) or pipeline stages that must be settled first. May be
+        empty.
     """
 
     def __init__(self, what: str, waiting_on: Iterable[str] = ()) -> None:

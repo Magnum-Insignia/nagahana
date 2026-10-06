@@ -1,0 +1,18 @@
+# The monitored site: it sizes the working memory of the one L model (D-63; lab/sizing.py).
+# Generated from the typed dataclasses by nagahana.core.config.generate_conf (D-57). Do not edit by hand:
+# change the dataclass default and regenerate; tests compare this file with the code.
+site:
+  # [D-63, AS-727] internal machines the site monitors
+  monitored_hosts: 4096
+  # [AS-727] entities in the working context per monitored host
+  entity_ratio: 1.0
+  # [D-63, AS-727] state updates per second at the site (sustained)
+  state_rate: 18400.0
+  # [D-15 working option (AS-11), AS-727] seconds of event log the site keeps (four weeks); the Environment is rebuilt from it
+  retention_s: 2419200.0
+  # [AS-727] memory of one desktop accelerator
+  desktop_accelerator_bytes: 24000000000.0
+  # [AS-727] memory of one workstation accelerator
+  workstation_accelerator_bytes: 48000000000.0
+  # [D-54, AS-727] memory of one data-centre accelerator
+  accelerator_bytes: 80000000000.0

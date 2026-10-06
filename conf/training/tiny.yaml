@@ -1,0 +1,632 @@
+# NagaHana training run, preset tiny (training/config.py, TrainingRun).
+# Generated from the typed dataclasses by nagahana.training.config.render_preset (D-57). Do not edit by hand:
+# change the dataclass default and regenerate (python -m nagahana train-config --preset tiny --write);
+# tests/test_training_config.py compares this file with the code. Stages: prep, stage 1 ... 4 (docs/training.md).
+# [run setting] run name (directory and tracking)
+name: nagahana-tiny
+# [D-22] model preset: L (the model) | tiny (the test fixture)
+preset: tiny
+# [AS-588] base seed of every random stream of the run
+seed: 0
+# [run setting] directory of manifests, checkpoints, logs and reports
+run_dir: runs/nagahana-tiny
+# [D-37, AS-402] site MTU in bytes for the physics term (required by the stages; never defaulted)
+mtu: 1500.0
+# [AS-28] site link rate for the Generator's link-rate bound (None = not checked)
+link_bps: null
+# [AS-28, AS-367] proposals enabled for the run: the physics gate (P-11) and the Generator's no-leakage rule (P-23)
+enabled_proposals: [P-11, P-23]
+# [D-57] override file of held-decision options (None = the working options)
+decisions_file: null
+# [D-09] jsonl | null | mlflow
+logger: jsonl
+# [D-09] MLflow tracking URI (required for the mlflow logger)
+tracking_uri: null
+# [AS-588] deterministic kernels (slower on accelerators)
+deterministic: false
+# [detail] cpu | cuda | None (cuda when available)
+device: cpu
+# [D-23] sources, segments and splits
+data:
+  # [run setting] raw sources of the corpus
+  sources: []
+  # [AS-333] segment length in seconds (None = K * c)
+  segment_seconds: 300.0
+  # [D-16, AS-35] attack families held out as novel (zero-shot)
+  novel_families: []
+  # [D-16, AS-35] networks held out as zero-shot
+  held_out_networks: []
+  # [AS-327] segments dropped after each cut
+  purge: 1
+  # [AS-325] exponent of the class-balanced sampler (1 = every family equally likely)
+  balance_power: 1.0
+# [D-23, D-40] Generator variants of the training split
+augment:
+  # [D-23] augment the training split with Generator variants
+  enabled: true
+  # [docs/sizing.md] variant budget per real training segment (4e9 + 4e9 updates: 1:1)
+  generated_to_real: 1.0
+  # [AS-582] balanced | uniform-families | explicit | none
+  target: balanced
+  # [AS-582] (family, share) pairs when target is explicit
+  mixture: []
+  # [AS-583] extra variants per family kept for the stage-3 energy re-screen
+  reserve_fraction: 0.25
+  # [AS-582] top-up rounds per family when variants are rejected
+  max_rounds: 2
+  # [AS-594] optimiser steps of each learned Generator family
+  fit_steps: 4
+  # [AS-594] learning rate of the learned Generator families
+  fit_lr: 0.001
+  # [AS-421] windows scored per variant by the marginal-energy callable
+  energy_max_windows: 1
+  # [AS-596] also store materialised variant tables (audit)
+  store_variants: false
+# [D-14, AS-27] the Generator's run-level choices
+generator:
+  # [AS-583, AS-361] off | from-stage-3 | always
+  energy_acceptance: from-stage-3
+  # [AS-27] (family, sampling weight) pairs; empty = uniform
+  family_weights: []
+  # [AS-350] fields kept by the flow-only export
+  flow_only_fields: [flow.src_ip, flow.dst_ip, flow.src_port, flow.dst_port, flow.protocol, flow.tcp_flags, flow.bytes_fwd, flow.bytes_bwd, flow.packets_fwd, flow.packets_bwd, flow.duration]
+  # [AS-351] field levels made NOT_OBSERVABLE by the drop transform
+  drop_levels: [packet]
+  # [AS-354] ports of one service, remapped among each other
+  service_alias_classes: [[http, [80, 8080, 8008]], [smb, [445, 139]]]
+  # [AS-354, RFC 6335 section 6] dynamic port range
+  ephemeral_ports: [49152, 65535]
+  # [AS-585] client tool fingerprints swapped inside a tool class
+  fingerprint_fields: [proto.tls.ja4]
+  # [AS-586] width of the energy-SSL network
+  energy_hidden: 32
+  # [AS-586] residual blocks of the energy-SSL network
+  energy_blocks: 2
+  # [AS-586] annealed Langevin sampler
+  langevin:
+    # [AS-586] largest noise level (standardised units)
+    sigma_max: 1.0
+    # [AS-586] smallest noise level
+    sigma_min: 0.01
+    # [AS-586] noise levels of the ladder
+    levels: 3
+    # [AS-586] Langevin steps per level
+    steps_per_level: 4
+    # [AS-586] eps of alpha_i = eps * sigma_i^2 / sigma_L^2
+    step_scale: 2.0e-05
+    # [AS-586] Metropolis-adjust the last level (MALA)
+    metropolis: true
+# [AS-577] multi-process training
+distributed:
+  # [AS-577] auto (single when WORLD_SIZE is 1, else fsdp) | single | ddp | fsdp
+  strategy: single
+  # [AS-577] auto (nccl on CUDA, gloo on CPU) | nccl | gloo
+  backend: gloo
+  # [AS-577] components whose blocks are FSDP units
+  shard_units: [tstct, taaft]
+  # [AS-577] free gathered block parameters after each forward
+  reshard_after_forward: true
+  # [AS-577] DDP: stage graphs vary with R and the data
+  find_unused_parameters: true
+  # [AS-578, docs/sizing.md] components whose blocks recompute activations
+  recompute: []
+  # [detail] collective timeout in seconds
+  timeout_s: 1800.0
+# [D-22] data preparation
+prep:
+  # [D-22] run the data preparation in train --all
+  enabled: true
+  # [AS-589] quantiles of each numeric column reported by the analytics
+  quantiles: [0.0, 0.01, 0.05, 0.25, 0.5, 0.75, 0.95, 0.99, 1.0]
+# [D-22] Simulator pretraining
+stage1:
+  # [docs/sizing.md, AS-320] two passes over the corpus, out-of-order augmentation on
+  loop:
+    # [D-22] run this stage in train --all
+    enabled: true
+    # [docs/sizing.md] optimiser steps (0 = bounded by epochs only)
+    max_steps: 4
+    # [docs/sizing.md] passes over the stage's training segments
+    epochs: 1
+    # [AS-572] micro-batches per optimiser step
+    accumulation: 1
+    # [docs/sizing.md] windows per micro-batch and rank (8 x 2,048 states)
+    lanes: 2
+    # [AS-39, AS-587] bf16 autocast | fp32 | fp16 autocast with loss scaling; weights fp32
+    precision: fp32
+    # [AS-574] optimiser steps between validations (0 = at the end only)
+    eval_every: 2
+    # [AS-574] objective calls per validation and rank
+    eval_batches: 2
+    # [detail] optimiser steps between logged metrics
+    log_every: 1
+    # [D-23, AS-592] mix accepted Generator variants of training segments
+    generated: true
+    # [AS-320] out-of-order augmentation inside the recorded uncertainty
+    perturb: true
+    # [AS-325] class-balanced segment order per epoch
+    balanced_sampling: true
+    # [D-61] hybrid Muon and AdamW optimiser
+    optim:
+      # [AS-406, D-61] peak learning rate, shared by Muon and AdamW (match_rms_adamw scale)
+      lr: 0.001
+      # [AS-406, D-61] decoupled weight decay, shared by Muon and AdamW (AdamW: matrices only)
+      weight_decay: 0.1
+      # [AS-571] AdamW moment decay rates
+      betas: [0.9, 0.95]
+      # [AS-571] AdamW epsilon
+      eps: 1.0e-08
+      # [detail] AdamW kernel: auto | foreach | fused | loop
+      adamw_implementation: auto
+      # [D-61] Muon momentum mu
+      muon_momentum: 0.95
+      # [D-61] Nesterov momentum in Muon
+      muon_nesterov: true
+      # [D-61] Newton-Schulz iterations of Muon
+      muon_ns_steps: 5
+      # [D-61] Muon lr adjustment: match_rms_adamw (0.2 sqrt(max(A, B))) | original
+      muon_adjust: match_rms_adamw
+      # [D-61, AS-39] precision of the Newton-Schulz iteration: bf16 (as torch.optim.Muon) | fp32
+      muon_ns_dtype: fp32
+      # [D-61, AS-581] QK-Clip after every optimiser step (MuonClip, arXiv:2507.20534)
+      qk_clip: true
+      # [AS-581] largest admissible pre-softmax attention logit per head
+      qk_clip_tau: 100.0
+      # [AS-406] global gradient-norm clip, once per optimiser step after the reduction
+      grad_clip: 1.0
+      # [D-61, AS-570] learning-rate schedule: wsd (default) | cosine | linear | constant
+      schedule: wsd
+      # [AS-406, AS-570] linear warm-up steps
+      warmup_steps: 1
+      # [AS-570] WSD: share of the planned steps spent decaying (Haegele et al.: 20 %)
+      decay_fraction: 0.2
+      # [AS-570] WSD decay shape: 1-sqrt (Haegele et al.) | linear | cosine
+      decay_shape: 1-sqrt
+      # [AS-570] final learning rate as a share of the peak
+      min_lr_ratio: 0.0
+      # [AS-406, AS-572] consecutive non-finite steps tolerated before raising (0 = refuse the first)
+      max_nonfinite_skips: 0
+    # [AS-573] weight averaging
+    ema:
+      # [AS-573] keep an EMA of the trained weights
+      enabled: false
+      # [AS-573] EMA decay
+      decay: 0.9999
+      # [AS-573] decay_t = min(decay, (1 + t) / (10 + t))
+      warmup: true
+      # [AS-573] validate (and export) with the averaged weights
+      evaluate_with_ema: true
+    # [AS-574] early stopping
+    early_stop:
+      # [AS-574] stop when the monitored metric stops improving
+      enabled: true
+      # [AS-574] validation metric watched (a 'val/...' key of the evaluation)
+      monitor: val/total
+      # [AS-574] min or max
+      mode: min
+      # [AS-574] evaluations without improvement before stopping
+      patience: 3
+      # [AS-574] smallest change counted as an improvement
+      min_delta: 0.0
+      # [AS-574] the stage ends with its best validated weights
+      restore_best: true
+    # [AS-576] resumable checkpoints
+    checkpoint:
+      # [AS-576] optimiser steps between resumable checkpoints
+      every_steps: 2
+      # [AS-576] newest checkpoints kept per stage (the best weights are kept apart)
+      keep_last: 2
+  # [AS-407 ... AS-410] objective weights
+  options:
+    # [AS-407] weight of masked cells in L_rec
+    mask_weight: 2.0
+    # [AS-408] beta_0 of the first-state KL
+    beta_first: 0.1
+    # [AS-409] (memory-stream, thinking-stream) transition-prior KL weights
+    prior_weights: [0.5, 0.5]
+    # [AS-410] observed hyperedges per plane per step in L_edge
+    edge_cap: 512
+# [D-22] TAAFT pretraining
+stage2:
+  # [docs/sizing.md] one pass over the corpus
+  loop:
+    # [D-22] run this stage in train --all
+    enabled: true
+    # [docs/sizing.md] optimiser steps (0 = bounded by epochs only)
+    max_steps: 3
+    # [docs/sizing.md] passes over the stage's training segments
+    epochs: 1
+    # [AS-572] micro-batches per optimiser step
+    accumulation: 1
+    # [docs/sizing.md] windows per micro-batch and rank (8 x 2,048 states)
+    lanes: 2
+    # [AS-39, AS-587] bf16 autocast | fp32 | fp16 autocast with loss scaling; weights fp32
+    precision: fp32
+    # [AS-574] optimiser steps between validations (0 = at the end only)
+    eval_every: 2
+    # [AS-574] objective calls per validation and rank
+    eval_batches: 2
+    # [detail] optimiser steps between logged metrics
+    log_every: 1
+    # [D-23, AS-592] mix accepted Generator variants of training segments
+    generated: true
+    # [AS-320] out-of-order augmentation inside the recorded uncertainty
+    perturb: false
+    # [AS-325] class-balanced segment order per epoch
+    balanced_sampling: true
+    # [D-61] hybrid Muon and AdamW optimiser
+    optim:
+      # [AS-406, D-61] peak learning rate, shared by Muon and AdamW (match_rms_adamw scale)
+      lr: 0.001
+      # [AS-406, D-61] decoupled weight decay, shared by Muon and AdamW (AdamW: matrices only)
+      weight_decay: 0.1
+      # [AS-571] AdamW moment decay rates
+      betas: [0.9, 0.95]
+      # [AS-571] AdamW epsilon
+      eps: 1.0e-08
+      # [detail] AdamW kernel: auto | foreach | fused | loop
+      adamw_implementation: auto
+      # [D-61] Muon momentum mu
+      muon_momentum: 0.95
+      # [D-61] Nesterov momentum in Muon
+      muon_nesterov: true
+      # [D-61] Newton-Schulz iterations of Muon
+      muon_ns_steps: 5
+      # [D-61] Muon lr adjustment: match_rms_adamw (0.2 sqrt(max(A, B))) | original
+      muon_adjust: match_rms_adamw
+      # [D-61, AS-39] precision of the Newton-Schulz iteration: bf16 (as torch.optim.Muon) | fp32
+      muon_ns_dtype: fp32
+      # [D-61, AS-581] QK-Clip after every optimiser step (MuonClip, arXiv:2507.20534)
+      qk_clip: true
+      # [AS-581] largest admissible pre-softmax attention logit per head
+      qk_clip_tau: 100.0
+      # [AS-406] global gradient-norm clip, once per optimiser step after the reduction
+      grad_clip: 1.0
+      # [D-61, AS-570] learning-rate schedule: wsd (default) | cosine | linear | constant
+      schedule: wsd
+      # [AS-406, AS-570] linear warm-up steps
+      warmup_steps: 1
+      # [AS-570] WSD: share of the planned steps spent decaying (Haegele et al.: 20 %)
+      decay_fraction: 0.2
+      # [AS-570] WSD decay shape: 1-sqrt (Haegele et al.) | linear | cosine
+      decay_shape: 1-sqrt
+      # [AS-570] final learning rate as a share of the peak
+      min_lr_ratio: 0.0
+      # [AS-406, AS-572] consecutive non-finite steps tolerated before raising (0 = refuse the first)
+      max_nonfinite_skips: 0
+    # [AS-573] weight averaging
+    ema:
+      # [AS-573] keep an EMA of the trained weights
+      enabled: false
+      # [AS-573] EMA decay
+      decay: 0.9999
+      # [AS-573] decay_t = min(decay, (1 + t) / (10 + t))
+      warmup: true
+      # [AS-573] validate (and export) with the averaged weights
+      evaluate_with_ema: true
+    # [AS-574] early stopping
+    early_stop:
+      # [AS-574] stop when the monitored metric stops improving
+      enabled: true
+      # [AS-574] validation metric watched (a 'val/...' key of the evaluation)
+      monitor: val/total
+      # [AS-574] min or max
+      mode: min
+      # [AS-574] evaluations without improvement before stopping
+      patience: 3
+      # [AS-574] smallest change counted as an improvement
+      min_delta: 0.0
+      # [AS-574] the stage ends with its best validated weights
+      restore_best: true
+    # [AS-576] resumable checkpoints
+    checkpoint:
+      # [AS-576] optimiser steps between resumable checkpoints
+      every_steps: 2
+      # [AS-576] newest checkpoints kept per stage (the best weights are kept apart)
+      keep_last: 2
+  # [AS-411, AS-412] objective weights
+  options:
+    # [AS-411] weight of the masked-entity belief loss
+    masked_entity: 1.0
+    # [AS-411] weight of the future-latent loss
+    future_latent: 1.0
+    # [AS-411] weight of the contrastive marginal-energy loss
+    contrastive: 1.0
+    # [AS-411] weight of the malignity readout loss
+    malignity: 1.0
+    # [AS-411] energy-magnitude regulariser
+    energy_reg: 0.01
+    # [AS-411] share of seen entities hidden per window
+    hidden_ratio: 0.15
+    # [AS-412] TSTCT R of the frozen perception (None = the run-time default)
+    perception_passes: null
+# [D-22] full training with training-phase human feedback
+stage3:
+  # [docs/sizing.md] one pass over the corpus
+  loop:
+    # [D-22] run this stage in train --all
+    enabled: true
+    # [docs/sizing.md] optimiser steps (0 = bounded by epochs only)
+    max_steps: 3
+    # [docs/sizing.md] passes over the stage's training segments
+    epochs: 1
+    # [AS-572] micro-batches per optimiser step
+    accumulation: 1
+    # [docs/sizing.md] windows per micro-batch and rank (8 x 2,048 states)
+    lanes: 2
+    # [AS-39, AS-587] bf16 autocast | fp32 | fp16 autocast with loss scaling; weights fp32
+    precision: fp32
+    # [AS-574] optimiser steps between validations (0 = at the end only)
+    eval_every: 2
+    # [AS-574] objective calls per validation and rank
+    eval_batches: 2
+    # [detail] optimiser steps between logged metrics
+    log_every: 1
+    # [D-23, AS-592] mix accepted Generator variants of training segments
+    generated: true
+    # [AS-320] out-of-order augmentation inside the recorded uncertainty
+    perturb: false
+    # [AS-325] class-balanced segment order per epoch
+    balanced_sampling: true
+    # [D-61] hybrid Muon and AdamW optimiser
+    optim:
+      # [AS-406, D-61] peak learning rate, shared by Muon and AdamW (match_rms_adamw scale)
+      lr: 0.001
+      # [AS-406, D-61] decoupled weight decay, shared by Muon and AdamW (AdamW: matrices only)
+      weight_decay: 0.1
+      # [AS-571] AdamW moment decay rates
+      betas: [0.9, 0.95]
+      # [AS-571] AdamW epsilon
+      eps: 1.0e-08
+      # [detail] AdamW kernel: auto | foreach | fused | loop
+      adamw_implementation: auto
+      # [D-61] Muon momentum mu
+      muon_momentum: 0.95
+      # [D-61] Nesterov momentum in Muon
+      muon_nesterov: true
+      # [D-61] Newton-Schulz iterations of Muon
+      muon_ns_steps: 5
+      # [D-61] Muon lr adjustment: match_rms_adamw (0.2 sqrt(max(A, B))) | original
+      muon_adjust: match_rms_adamw
+      # [D-61, AS-39] precision of the Newton-Schulz iteration: bf16 (as torch.optim.Muon) | fp32
+      muon_ns_dtype: fp32
+      # [D-61, AS-581] QK-Clip after every optimiser step (MuonClip, arXiv:2507.20534)
+      qk_clip: true
+      # [AS-581] largest admissible pre-softmax attention logit per head
+      qk_clip_tau: 100.0
+      # [AS-406] global gradient-norm clip, once per optimiser step after the reduction
+      grad_clip: 1.0
+      # [D-61, AS-570] learning-rate schedule: wsd (default) | cosine | linear | constant
+      schedule: wsd
+      # [AS-406, AS-570] linear warm-up steps
+      warmup_steps: 1
+      # [AS-570] WSD: share of the planned steps spent decaying (Haegele et al.: 20 %)
+      decay_fraction: 0.2
+      # [AS-570] WSD decay shape: 1-sqrt (Haegele et al.) | linear | cosine
+      decay_shape: 1-sqrt
+      # [AS-570] final learning rate as a share of the peak
+      min_lr_ratio: 0.0
+      # [AS-406, AS-572] consecutive non-finite steps tolerated before raising (0 = refuse the first)
+      max_nonfinite_skips: 0
+    # [AS-573] weight averaging
+    ema:
+      # [AS-573] keep an EMA of the trained weights
+      enabled: false
+      # [AS-573] EMA decay
+      decay: 0.9999
+      # [AS-573] decay_t = min(decay, (1 + t) / (10 + t))
+      warmup: true
+      # [AS-573] validate (and export) with the averaged weights
+      evaluate_with_ema: true
+    # [AS-574] early stopping
+    early_stop:
+      # [AS-574] stop when the monitored metric stops improving
+      enabled: true
+      # [AS-574] validation metric watched (a 'val/...' key of the evaluation)
+      monitor: val/total
+      # [AS-574] min or max
+      mode: min
+      # [AS-574] evaluations without improvement before stopping
+      patience: 3
+      # [AS-574] smallest change counted as an improvement
+      min_delta: 0.0
+      # [AS-574] the stage ends with its best validated weights
+      restore_best: true
+    # [AS-576] resumable checkpoints
+    checkpoint:
+      # [AS-576] optimiser steps between resumable checkpoints
+      every_steps: 2
+      # [AS-576] newest checkpoints kept per stage (the best weights are kept apart)
+      keep_last: 2
+  # [AS-412 ... AS-415] objective weights and feedback
+  options:
+    # [AS-22, AS-597] optimiser steps of the stop-gradient phase (None = joint_after_fraction)
+    joint_after: null
+    # [AS-597] share of the planned steps in the stop-gradient phase
+    joint_after_fraction: 0.5
+    # [AS-414] weight of TAAFT's supervised readouts
+    readout_weight: 1.0
+    # [AS-413] weight of the Advisor's policy improvement
+    advisor_weight: 1.0
+    # [build-spec section 3] Forecaster survival NLL weight
+    forecaster_hazard: 1.0
+    # [build-spec section 3] Forecaster behaviour cloning (technique) weight
+    forecaster_bc_technique: 1.0
+    # [build-spec section 3] Forecaster behaviour cloning (target) weight
+    forecaster_bc_target: 1.0
+    # [build-spec section 3] Forecaster per-step stage weight
+    forecaster_stage: 1.0
+    # [build-spec section 3] latent consistency weight
+    forecaster_consistency: 1.0
+    # [build-spec section 3] hypothesis consistency weight
+    forecaster_hypothesis: 1.0
+    # [build-spec section 3] back-projected latent weight
+    forecaster_latent: 1.0
+    # [build-spec section 3] process reward weight
+    forecaster_reward: 1.0
+    # [build-spec section 3, AS-253] TD(lambda) value weight
+    forecaster_value: 1.0
+    # [AS-415] routes imagined per trigger for the Verifier's step labels
+    verifier_routes: 4
+    # [AS-412] TSTCT R of the frozen perception (None = the run-time default)
+    perception_passes: null
+    # [D-07, D-21, AS-595] training-phase feedback learners (training.feedback registry); each runs only under a HumanCommand
+    feedback: [verifier-heads]
+# [D-22] zero-shot validation with confidence calibration
+stage4:
+  # [D-22] run this stage in train --all
+  enabled: true
+  # [D-44] TSTCT R (None = the run-time default)
+  tstct_passes: null
+  # [D-44] TAAFT R (None = the run-time default)
+  taaft_passes: null
+  # [D-44] descent steps S (None = the run-time default)
+  descent_steps: null
+  # [D-30] forecast horizon K (None = the model default)
+  horizon_k: null
+  # [D-46] routes N (None = the model default)
+  routes_n: 3
+  # [AS-419] alert threshold on P_inf(K) for detection metrics
+  threshold: 0.5
+  # [D-23] real splits evaluated (zero-shot split into known and novel)
+  eval_splits: [test, zero_shot]
+  # [docs/sizing.md] windows per batch and rank
+  lanes: 2
+  # [D-13, AS-26, AS-591] confidence calibrators (training.feedback registry); applied only on a HumanCommand
+  calibration: [ml-temperature]
+  # [D-13, AS-26] train LoRA site adapters (needs a HumanCommand at run time)
+  site_calibration: false
+  # [AS-26] the site's own traffic for the adapters (unlabelled sources take labeller/dataset 'unlabelled')
+  site_sources: []
+  # [AS-26] CSV of analyst-confirmed alerts: entity (data-model key), time (epoch s), malicious (0/1)
+  site_alerts: null
+  # [AS-26] site traffic required (24 h)
+  site_min_span_s: 86400.0
+  # [AS-26] analyst-confirmed alerts required
+  site_min_alerts: 50
+  # [AS-26] acknowledge a pilot run below the requirements
+  site_allow_short: false
+  # [AS-420] weight of the alert BCE beside the self-supervised terms
+  site_alert_weight: 1.0
+  # [AS-598] optimisation of the site adapters
+  site_loop:
+    # [D-22] run this stage in train --all
+    enabled: true
+    # [docs/sizing.md] optimiser steps (0 = bounded by epochs only)
+    max_steps: 2
+    # [docs/sizing.md] passes over the stage's training segments
+    epochs: 1
+    # [AS-572] micro-batches per optimiser step
+    accumulation: 1
+    # [docs/sizing.md] windows per micro-batch and rank (8 x 2,048 states)
+    lanes: 2
+    # [AS-39, AS-587] bf16 autocast | fp32 | fp16 autocast with loss scaling; weights fp32
+    precision: fp32
+    # [AS-574] optimiser steps between validations (0 = at the end only)
+    eval_every: 0
+    # [AS-574] objective calls per validation and rank
+    eval_batches: 2
+    # [detail] optimiser steps between logged metrics
+    log_every: 1
+    # [D-23, AS-592] mix accepted Generator variants of training segments
+    generated: false
+    # [AS-320] out-of-order augmentation inside the recorded uncertainty
+    perturb: false
+    # [AS-325] class-balanced segment order per epoch
+    balanced_sampling: true
+    # [D-61] hybrid Muon and AdamW optimiser
+    optim:
+      # [AS-406, D-61] peak learning rate, shared by Muon and AdamW (match_rms_adamw scale)
+      lr: 0.001
+      # [AS-406, D-61] decoupled weight decay, shared by Muon and AdamW (AdamW: matrices only)
+      weight_decay: 0.1
+      # [AS-571] AdamW moment decay rates
+      betas: [0.9, 0.95]
+      # [AS-571] AdamW epsilon
+      eps: 1.0e-08
+      # [detail] AdamW kernel: auto | foreach | fused | loop
+      adamw_implementation: auto
+      # [D-61] Muon momentum mu
+      muon_momentum: 0.95
+      # [D-61] Nesterov momentum in Muon
+      muon_nesterov: true
+      # [D-61] Newton-Schulz iterations of Muon
+      muon_ns_steps: 5
+      # [D-61] Muon lr adjustment: match_rms_adamw (0.2 sqrt(max(A, B))) | original
+      muon_adjust: match_rms_adamw
+      # [D-61, AS-39] precision of the Newton-Schulz iteration: bf16 (as torch.optim.Muon) | fp32
+      muon_ns_dtype: fp32
+      # [D-61, AS-581] QK-Clip after every optimiser step (MuonClip, arXiv:2507.20534)
+      qk_clip: true
+      # [AS-581] largest admissible pre-softmax attention logit per head
+      qk_clip_tau: 100.0
+      # [AS-406] global gradient-norm clip, once per optimiser step after the reduction
+      grad_clip: 1.0
+      # [D-61, AS-570] learning-rate schedule: wsd (default) | cosine | linear | constant
+      schedule: wsd
+      # [AS-406, AS-570] linear warm-up steps
+      warmup_steps: 0
+      # [AS-570] WSD: share of the planned steps spent decaying (Haegele et al.: 20 %)
+      decay_fraction: 0.2
+      # [AS-570] WSD decay shape: 1-sqrt (Haegele et al.) | linear | cosine
+      decay_shape: 1-sqrt
+      # [AS-570] final learning rate as a share of the peak
+      min_lr_ratio: 0.0
+      # [AS-406, AS-572] consecutive non-finite steps tolerated before raising (0 = refuse the first)
+      max_nonfinite_skips: 0
+    # [AS-573] weight averaging
+    ema:
+      # [AS-573] keep an EMA of the trained weights
+      enabled: false
+      # [AS-573] EMA decay
+      decay: 0.9999
+      # [AS-573] decay_t = min(decay, (1 + t) / (10 + t))
+      warmup: true
+      # [AS-573] validate (and export) with the averaged weights
+      evaluate_with_ema: true
+    # [AS-574] early stopping
+    early_stop:
+      # [AS-574] stop when the monitored metric stops improving
+      enabled: true
+      # [AS-574] validation metric watched (a 'val/...' key of the evaluation)
+      monitor: val/total
+      # [AS-574] min or max
+      mode: min
+      # [AS-574] evaluations without improvement before stopping
+      patience: 3
+      # [AS-574] smallest change counted as an improvement
+      min_delta: 0.0
+      # [AS-574] the stage ends with its best validated weights
+      restore_best: true
+    # [AS-576] resumable checkpoints
+    checkpoint:
+      # [AS-576] optimiser steps between resumable checkpoints
+      every_steps: 2
+      # [AS-576] newest checkpoints kept per stage (the best weights are kept apart)
+      keep_last: 2
+# [P-17] ablation switches (full = the design)
+ablation:
+  # [P-17] name of the ablation variant (training.ablation.build_variants); full = no ablation
+  variant: full
+  # [P-17, AS-579] none (the design) | inference | single-stage | full
+  tier: none
+  # [D-42, P-17] TAAFT lens terms removed from E_total (names of TAAFTConfig.lenses)
+  lenses_off: []
+  # [AS-09, AS-10] TSTCT causal heads contribute (False: their outputs are masked)
+  tstct_causal_heads: true
+  # [AS-09] TSTCT temporal heads contribute (False: their outputs are masked)
+  tstct_temporal_heads: true
+  # [D-43, D-44, AS-07] fixed loop passes R for TSTCT and TAAFT (None = the design: sampled in training, run-time budget at inference)
+  loop_passes: null
+  # [D-51] carry the Environment across windows (False: every window starts empty)
+  environment: true
+  # [AS-11, AS-220] TAAFT reads the long-term memory
+  longterm_memory: true
+  # [D-18, D-37] the physics boundary (stage-1 term and TAAFT's physics lens)
+  physics: true
+  # [D-23, D-40] Generator augmentation of the training split
+  generator: true
+  # [D-22] run TAAFT pretraining (False: stage 3 starts TAAFT from its initialisation)
+  stage2_pretraining: true
+  # [D-39, AS-01] CVG-AE relation planes removed (names of GraphConfig.planes)
+  planes_off: []

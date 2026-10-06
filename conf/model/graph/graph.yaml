@@ -1,0 +1,24 @@
+# Graph builder (build-spec section 2.2). (models/config/components.py, GraphConfig).
+# Generated from the typed dataclasses by nagahana.core.config.generate_conf (D-57). Do not edit by hand:
+# change the dataclass default and regenerate; tests compare this file with the code.
+graph:
+  # [AS-01] declared relation planes, in branch order (D-04 held)
+  planes: [connectivity, services, identity, remote_admin, name_resolution, ot_control]
+  # [AS-02] hyperedge kinds of every plane
+  hyperedge_kinds: [session, exchange, group, fan]
+  # [D-47] entity kinds of the data model (vocab.NODE_KINDS)
+  node_kinds: [host, service, account, ot_device, external, subnet, application, multicast]
+  # [AS-102] local subgraph cap per position (compute profile)
+  max_nodes: 32
+  # [D-49, AS-103] random-walk structural encoding length
+  rwse_steps: 16
+  # [AS-02, AS-101] a fan hyperedge needs at least this many distinct responders
+  fan_min_responders: 8
+  # [AS-101] within this trailing window in seconds; episodes split at larger gaps
+  fan_window_s: 60.0
+  # [AS-102] time-based validity of a hyperedge in local subgraphs (never count-based)
+  hyperedge_ttl_s: 3600.0
+  # [AS-102] local subgraph radius (the TSTCT spatial reach, hop <= 2)
+  max_hops: 2
+  # [D-04, AS-01, AS-720] learned relation planes over the connectivity plane; 0 under the working option 'declared'
+  learned_planes: 0

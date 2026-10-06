@@ -121,10 +121,12 @@ def test_information_audit_is_gated_and_correct():
     assert indep == pytest.approx(0.0, abs=1e-12)
 
 
-def test_sizing_budget_is_consistent():
-    from nagahana.lab.sizing import TIERS, _dec_block, _enc_block, budget
+def test_sizing_counts_the_built_model():
+    from nagahana.lab.sizing import LABELS, built_counts, table
+    from nagahana.models.nagahana import COMPONENTS
 
-    assert _enc_block(64, 4) == 12 * 64 * 64 + 13 * 64
-    assert _dec_block(64, 4) == 16 * 64 * 64 + 19 * 64
-    totals = [sum(budget(t).values()) for t in TIERS]
-    assert totals == sorted(totals) and all(v > 0 for b in map(budget, TIERS) for v in b.values())
+    counts = built_counts()
+    assert set(LABELS) == set(COMPONENTS)
+    assert counts["total"] == sum(counts[c] for c in COMPONENTS)
+    assert all(counts[c] > 0 for c in COMPONENTS)
+    assert f"{counts['total']:,}" in table()

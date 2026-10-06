@@ -1,1 +1,1 @@
-"""Loss template, proper scoring rules, process rewards."""
+"""The loss template, proper scoring rules and the step rewards of imagined steps."""

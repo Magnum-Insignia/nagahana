@@ -1,4 +1,60 @@
-# Generator (training only; src/nagahana/models/generator).
-families: ???                  # held: D-14 (jem / energy-ssl / masked-generative / autoregressive / diffusion)
-controls: [observability, signature, trace, impact]
-physics_gate_tau: ???          # used only if proposal P-11 is enabled
+# Generator, training only (build-spec section 2.11). Not part of the model's parameter count. (models/config/components.py, GeneratorConfig).
+# Generated from the typed dataclasses by nagahana.core.config.generate_conf (D-57). Do not edit by hand:
+# change the dataclass default and regenerate; tests compare this file with the code.
+generator:
+  # [build-spec section 2.11] width of the masked-generative transformer
+  dim: 512
+  # [build-spec section 2.11] blocks of the masked-generative transformer
+  blocks: 8
+  # [build-spec section 2.11] attention heads per block
+  heads: 8
+  # [AS-32] SwiGLU hidden width
+  mlp_hidden: 1408
+  # [AS-365] diffusion steps T
+  diffusion_steps: 100
+  # [AS-365] hidden width of the TabDDPM-style denoiser
+  denoiser_hidden: 1024
+  # [AS-28] P-11 gate Phi_phys <= tau
+  physics_tau: 0.001
+  # [AS-370] share of variants drawn from attack events
+  attack_share: 0.7
+  # [AS-362] bins per numeric column in signed-log1p space
+  value_bins: 256
+  # [AS-362] classes per categorical or bitmask column, including out-of-vocabulary
+  cat_vocab: 1024
+  # [AS-364] records per sequence seen by the masked model
+  max_records: 16
+  # [AS-363] MaskGIT iterative-decoding steps
+  unmask_steps: 8
+  # [AS-363] Gumbel noise on confidences, annealed to 0
+  choice_temperature: 1.0
+  # [AS-364] share of left-to-right (autoregressive) training examples
+  ar_fraction: 0.5
+  # [AS-365] residual SwiGLU blocks of the denoiser
+  denoiser_blocks: 4
+  # [AS-365] cosine-schedule offset s (Nichol and Dhariwal 2021)
+  cosine_s: 0.008
+  # [AS-366] share of an update's contributing cells regenerated
+  regen_fraction: 0.3
+  # [AS-352] 1-in-n packet-sampling rates drawn from
+  sampling_rates: [8, 32, 128]
+  # [AS-353] share of internal hosts in the hidden segment
+  sensor_hide_fraction: 0.2
+  # [AS-355] timing scale s in [1 / (1 + eps), 1 + eps]
+  jitter_rel: 0.1
+  # [AS-356] time-dilation factor range of attack activity
+  rate_scale: [0.5, 2.0]
+  # [AS-358] share of benign-only relations dropped
+  edge_dropout: 0.1
+  # [AS-358] share of benign-only relations rewired
+  rewire_rate: 0.1
+  # [AS-360] w_c of every residual in the gate's Phi_phys
+  physics_weight: 1.0
+  # [AS-361] accepted quantile range of real-data energies
+  energy_quantiles: [0.01, 0.99]
+  # [physics/residuals.py MTUBound] site MTU in bytes; required where a wire-capture size bound is used, never defaulted
+  mtu: null
+  # [physics/residuals.py LinkCapacityBound] site line rate in bit/s; null means the link-capacity bound is not checked
+  link_bps: null
+  # [AS-27] attempts per requested variant (rejections are reported)
+  max_attempts: 3

@@ -1,0 +1,52 @@
+# Exploratory analysis (`analytics.eda`).
+# Generated from nagahana.analytics.config.EDAConfig by render_yaml; the dataclass is the single
+# source of truth. Every value equals its dataclass default (check_yaml_file verifies it).
+eda:
+  # extra split of value distributions: label, dataset, network, split, family
+  group_by: [label]
+  # histogram bins at most (Freedman-Diaconis width, clipped)
+  max_bins: 64
+  # categories listed per categorical field
+  top_categories: 20
+  # trimmed-mean proportion cut from each tail
+  trim: 0.1
+  # smallest number of upper order statistics on the Hill path
+  tail_k_min: 10
+  # largest share of the positive sample on the Hill path
+  tail_max_share: 0.5
+  # hard bound on k for the Kolmogorov-Smirnov scan
+  tail_k_cap: 100000
+  # values of k on the (geometric) Hill path
+  tail_grid: 128
+  # confidence level of the Hill intervals
+  tail_level: 0.95
+  # transform before Pearson's r: slog1p (AS-31) or none
+  pearson_transform: slog1p
+  # pairwise measures computed
+  dependence_methods: [pearson, spearman, dcor, mi]
+  # seeded row sample for the pairwise measures
+  dependence_max_rows: 20000
+  # pairs with fewer pairwise-complete records are not estimated
+  dependence_min_pairs: 50
+  # neighbours of the k-NN mutual-information estimators
+  mi_k: 3
+  # permutations for distance-correlation p-values (0: none)
+  dcor_permutations: 0
+  # most frequent status patterns listed
+  patterns_top: 25
+  # near duplicates: tolerance on the slog1p scale
+  near_tolerance: 0.05
+  # near duplicates: share of matching columns
+  near_threshold: 0.95
+  # near duplicates: LSH bands
+  near_bands: 24
+  # near duplicates: columns sampled per band
+  near_rows_per_band: 8
+  # near duplicates: buckets above this size are verified against pivots
+  near_max_bucket: 64
+  # near duplicates: pivots per oversized bucket
+  near_pivots: 8
+  # near duplicates: seeded row sample above this size
+  near_max_rows: 500000
+  # seed of every random choice of the analysis
+  seed: 0

@@ -1,0 +1,52 @@
+# Options of held decisions (governance/decisions.py).
+# Generated from the typed dataclasses by nagahana.core.config.generate_conf (D-57). Do not edit by hand:
+# change the dataclass default and regenerate; tests compare this file with the code.
+# A held decision shows its working option, recorded by the assumption named in its comment. A held
+# decision without a working option shows ??? and is resolved only when a run configures an option.
+decisions:
+  # [D-02, AS-12] What fires a Forecaster computation? Admissible: fixed cadence; fixed cadence + capped priority triggers.
+  forecaster-trigger-policy: fixed cadence + capped priority triggers
+  # [D-03a, AS-18] What counts as the attacker succeeding? Admissible: crown jewel reached; any ATT&CK stage progression; per-site definition; internal entity in a post-initial-access tactic.
+  attacker-success-criterion: internal entity in a post-initial-access tactic
+  # [D-03b, AS-23] How is disruption priced per asset? Admissible: per-asset price table; criticality by entity kind x disruption weight by action.
+  disruption-pricing: criticality by entity kind x disruption weight by action
+  # [D-03c, AS-24] Expected-case or worst-case optimisation? Admissible: expected case; worst case; risk measure, e.g. CVaR.
+  advisor-risk-aggregation: risk measure, e.g. CVaR
+  # [D-04, AS-01] How are relation planes formed? Admissible: declared; learned; declared + learned.
+  relation-plane-formation: declared
+  # [D-05, AS-29] How does the Decoder flatten planes into one view? Admissible: typed multigraph; supra-graph; reducibility merge; combination.
+  decoder-view-flattening: typed multigraph
+  # [D-06] Which standards does the data model follow? No working option. Admissible: none recorded.
+  standards-reading: ???
+  # [D-08] Should the threat-model skeleton become a document? No working option. Admissible: none recorded.
+  threat-model-document: ???
+  # [D-10] Repository name and location. No working option. Admissible: none recorded.
+  repo-location: ???
+  # [D-11a, AS-04] What does CVG-AE reconstruct? Admissible: contributing fields only; contributing fields + candidate hyperedges; contributing fields + candidate hyperedges + next state.
+  reconstruction-target: contributing fields + candidate hyperedges
+  # [D-11b, AS-16] Which energy-model jobs are in v1? Admissible: TAAFT refinement only; TAAFT refinement + novelty signal; TAAFT refinement + novelty signal + Advisor shaping.
+  energy-jobs-v1: TAAFT refinement + novelty signal + Advisor shaping
+  # [D-11c, AS-17] Adversary objective: realistic or worst-case floor? Admissible: realistic; realistic + exploiters; worst-case floor.
+  adversary-objective: realistic
+  # [D-12, AS-22] How do TAAFT and the policy/value heads couple? Admissible: joint; separate; staged.
+  taaft-policy-coupling: staged
+  # [D-13, AS-26] What do site calibration adapters change? Admissible: temperature scaling; isotonic; conformal thresholds; low-rank adapters; low-rank adapters + temperature scaling.
+  site-calibration-adapter: low-rank adapters + temperature scaling
+  # [D-14, AS-27] Which Generator families are in v1? Admissible: jem; masked-generative; autoregressive; diffusion; all families.
+  generator-families-v1: all families
+  # [D-15, AS-11] What is the durable Environment? Admissible: KV cache only; KV cache as a view over an append-only event log.
+  environment-persistence: KV cache as a view over an append-only event log
+  # [D-16, AS-35] What does 'novel' mean in zero-shot validation? Admissible: unseen families; unseen families + unseen networks.
+  zero-shot-definition: unseen families + unseen networks
+  # [D-24, AS-14] Where does mechanism design live? Admissible: TAAFT; Advisor; both (analysis in TAAFT, design in Advisor).
+  mechanism-design-placement: TAAFT
+  # [D-25, AS-40] May physics residuals score incoming telemetry? Admissible: boundary only; boundary + telemetry reliability input.
+  physics-on-telemetry: boundary only
+  # [D-26, AS-36] Noise analysis in TAAFT. Admissible: inside the information lens; own lens term.
+  noise-analysis: inside the information lens
+  # [D-27] Kafka client library. No working option. Admissible: confluent-kafka; aiokafka; kafka-python.
+  kafka-client: ???
+  # [D-28] Demo interface. No working option. Admissible: Streamlit; Flask; CLI.
+  demo-interface: ???
+  # [D-29, AS-30] Evidence weights for stale / low-reliability fields. Admissible: OBSERVED 1.0, STALE 0.5, LOW_RELIABILITY 0.5 where a numeric weight is needed; no age decay.
+  observation-status-weights: OBSERVED 1.0, STALE 0.5, LOW_RELIABILITY 0.5 where a numeric weight is needed; no age decay

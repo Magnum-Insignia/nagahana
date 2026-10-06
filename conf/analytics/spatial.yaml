@@ -1,0 +1,44 @@
+# Graph analytics (`analytics.spatial`).
+# Generated from nagahana.analytics.config.SpatialConfig by render_yaml; the dataclass is the single
+# source of truth. Every value equals its dataclass default (check_yaml_file verifies it).
+spatial:
+  # use edge weights as lengths for shortest paths
+  weighted: false
+  # null: exact betweenness; else sampled sources (Brandes and Pich 2007)
+  betweenness_sources: null
+  # sources processed together
+  betweenness_batch: 64
+  # PageRank damping
+  pagerank_alpha: 0.85
+  # PageRank L1 tolerance
+  pagerank_tol: 1.0e-12
+  # PageRank iterations at most
+  pagerank_max_iter: 10000
+  # eigenvector centrality tolerance
+  eigen_tol: 1.0e-12
+  # eigenvector centrality iterations at most
+  eigen_max_iter: 10000
+  # modularity resolution gamma
+  louvain_resolution: 1.0
+  # smallest modularity gain that counts as an improvement
+  louvain_tol: 1.0e-10
+  # aggregation levels at most
+  louvain_max_levels: 50
+  # local-moving sweeps per level at most
+  louvain_max_sweeps: 1000
+  # configuration-model samples for motif z-scores (0: none)
+  motif_null_samples: 0
+  # Laplacian eigenvalues compared by the spectral distance
+  spectral_k: 50
+  # heat-trace times
+  heat_times: [0.01, 0.0316, 0.1, 0.316, 1.0, 3.16, 10.0, 31.6, 100.0]
+  # dense eigendecomposition up to this many nodes, Lanczos quadrature above
+  max_dense_nodes: 4000
+  # stochastic Lanczos quadrature probe vectors
+  slq_vectors: 32
+  # Lanczos steps per probe
+  slq_steps: 48
+  # per-window graphs of a corpus (the AS-12 cadence)
+  window_seconds: 60.0
+  # seed of every random choice of the analysis
+  seed: 0
