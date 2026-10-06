@@ -7,7 +7,7 @@
 </div>
 
 > **⚠️ Model Weights Notice**
-> The trained NagaHana (L) weights file is **4.54 GB (fp32)** — too large for GitHub to host.
+> The trained NagaHana weights file is **4.54 GB (fp32)** — too large for GitHub to host.
 > Weights are distributed separately. This repository contains the full source, configuration, and evaluation framework only.
 
 ---
@@ -99,7 +99,7 @@ nagahana/
 | `model/verifier/` | Verifier shape and calibration settings |
 | `site/` | Site-adapter (LoRA) configuration |
 | `statphys/` | Statistical-physics engine: ensembles, temperature, EWS series, alarm thresholds |
-| `training/L.yaml` | Full L-size training run configuration (1.13 B parameters) |
+| `training/L.yaml` | Full training run configuration (1.13 B parameters) |
 | `training/tiny.yaml` | Tiny-width training run for CI/smoke testing |
 | `worldsim/` | Named scenario library: enterprise APT, ransomware, exfiltration, DoS, OT manipulation, slow recon, benign baselines |
 
@@ -389,7 +389,7 @@ nagahana/
 
 ## Model: Parameters and Compute
 
-NagaHana is one model, **L** (1.13 billion parameters, Generator excluded).
+NagaHana is a 1.13 billion parameter model (Generator excluded).
 Weights are in single precision (fp32). Outputs are in float64.
 
 ### Parameter Count
@@ -473,21 +473,21 @@ Baselines: logistic regression trained on the same features (Detection LR, Hazar
 
 | # | Limitation | Severity |
 |---|---|---|
-| L-01 | Encrypted payloads (TLS 1.3, QUIC) shrink the observable surface | Moderate |
-| L-02 | Single-vantage segments limit cross-check of sensor reliability | Moderate |
-| L-03 | Public training corpora carry label noise and emulated (not production) attacks | Moderate |
-| L-04 | Thinner coverage of some industrial protocols (PROFINET, EtherNet/IP CIP, BACnet, ICCP) | Low |
-| L-05 | Out-of-order and lossy telemetry can leave the reconstructed timeline incomplete | Low |
-| L-06 | Cold start: no established normal behaviour for the first days at a site | High |
-| L-07 | Rare legitimate events can resemble low-and-slow attacks | Moderate |
-| L-08 | Full L inference needs ~4 × 80 GB accelerators | Moderate |
-| L-09 | Per-entity memory grows with host count × retention period at large CII sites | Moderate |
-| L-10 | PCAP parsing is a per-packet Python loop; line-rate capture needs flow-level sensors in front | Low |
-| L-11 | An adaptive adversary can shift behaviour once it notices defensive responses | Moderate |
-| L-12 | Explanations attribute an internal quantity close to, but not identical with, the displayed probability | Moderate |
-| L-13 | Threat-actor attribution from network telemetry alone is low-confidence | Low |
-| L-14 | Causal attention heads model influence but do not certify identified causal structure | Moderate |
-| L-15 | Physical-consistency checks assume wire-level packet sizes; segmentation offload can exceed them | Low |
+| LIM-01 | Encrypted payloads (TLS 1.3, QUIC) shrink the observable surface | Moderate |
+| LIM-02 | Single-vantage segments limit cross-check of sensor reliability | Moderate |
+| LIM-03 | Public training corpora carry label noise and emulated (not production) attacks | Moderate |
+| LIM-04 | Thinner coverage of some industrial protocols (PROFINET, EtherNet/IP CIP, BACnet, ICCP) | Low |
+| LIM-05 | Out-of-order and lossy telemetry can leave the reconstructed timeline incomplete | Low |
+| LIM-06 | Cold start: no established normal behaviour for the first days at a site | High |
+| LIM-07 | Rare legitimate events can resemble low-and-slow attacks | Moderate |
+| LIM-08 | Full inference needs ~4 × 80 GB accelerators | Moderate |
+| LIM-09 | Per-entity memory grows with host count × retention period at large CII sites | Moderate |
+| LIM-10 | PCAP parsing is a per-packet Python loop; line-rate capture needs flow-level sensors in front | Low |
+| LIM-11 | An adaptive adversary can shift behaviour once it notices defensive responses | Moderate |
+| LIM-12 | Explanations attribute an internal quantity close to, but not identical with, the displayed probability | Moderate |
+| LIM-13 | Threat-actor attribution from network telemetry alone is low-confidence | Low |
+| LIM-14 | Causal attention heads model influence but do not certify identified causal structure | Moderate |
+| LIM-15 | Physical-consistency checks assume wire-level packet sizes; segmentation offload can exceed them | Low |
 
 ---
 
@@ -531,7 +531,7 @@ python -m nagahana worldsim generate --scenario enterprise_apt --worlds 4 --out 
 python -m nagahana lr fit --corpus corpora/cic18 --config conf/baselines/lr/lr.yaml --out models/lr-cic18.npz
 python -m nagahana lr predict --model models/lr-cic18.npz --corpus corpora/cic18 --protocol P1 --out outputs/lr-cic18.npz
 
-# Parameter and compute profile of L
+# Parameter and compute profile
 python -m nagahana.lab.sizing
 python -m nagahana.lab.compute
 

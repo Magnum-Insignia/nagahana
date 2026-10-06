@@ -26,7 +26,7 @@
 
 ## 1. Model Parameters and Scale
 
-NagaHana is one model, **L** (1.13 billion parameters, Generator excluded). Every component is built on the meta device (no memory allocation) and its parameters are counted exactly by `python -m nagahana.lab.sizing`.
+NagaHana is a 1.13 billion parameter model (Generator excluded). Every component is built on the meta device (no memory allocation) and its parameters are counted exactly by `python -m nagahana.lab.sizing`.
 
 ### Parameter Count (built model, 2026-10-02)
 
@@ -45,7 +45,7 @@ NagaHana is one model, **L** (1.13 billion parameters, Generator excluded). Ever
 
 **Generator** (training only, excluded from deployment count): 107,992,101 parameters at the canonical 54-column layout; 92,767,779 at the PCAP adapter's 45 columns. Count depends on the column layout because its value bins, embeddings and output heads are per column.
 
-### Model Shapes at L preset
+### Model Architecture Shapes
 
 | Component | Shape |
 |---|---|
@@ -192,7 +192,7 @@ Zero-shot: any window whose network is held out, or that contains any update of 
 
 ## 5. Data Pipeline Measurements
 
-### Flow-State Emission — Sample Slice (270,596 packets, 50 min, L window of 1,024 updates)
+### Flow-State Emission — Sample Slice (270,596 packets, 50 min, Window of 1,024 updates)
 
 Measured by running `measure_slice.py` / `measure_stream.py` on the full sample slice.
 
@@ -539,21 +539,21 @@ The gain is resolution near 0 and 1 (float32 cannot represent 1 − P below ≈ 
 
 | # | Limitation | Severity | Current Mitigation | Work in Progress |
 |---|---|---|---|---|
-| L-01 | Encrypted payloads (TLS 1.3, QUIC, encrypted SNI) shrink the observable surface | Moderate | Timing, sizes, flow structure, graph structure, handshake fingerprints; absence is a status, never benign | Better use of graph-frequency and timing statistics for slow attacks |
-| L-02 | Single-vantage segments: sensor reliability cannot be cross-checked, spoofed values harder to discount | Moderate | Low-reliability observation status assigned; evidence weight reduced | Reliability estimation from overlapping vantages and physics consistency |
-| L-03 | Public training corpora carry label noise; attack campaigns emulated, not observed in production | Moderate | Corrected label sets used where available; leakage and duplicate audits; novel/known families reported separately | Ground-truth world simulator with known hidden state; information audit (P-14, P-15) |
-| L-04 | Thinner coverage of some industrial protocols (PROFINET, EtherNet/IP CIP, BACnet, ICCP, C37.118) | Low | Unknown protocols modelled at flow/timing level with fields marked "not supplied" | Field mappings and simulator scenarios for remaining protocols |
-| L-05 | Out-of-order and lossy telemetry leaves the reconstructed timeline incomplete | Low | Bounded reordering with event-time watermarks; loss carried as statuses | Per-sensor loss estimation feeding the reliability model |
-| L-06 | Cold start: no established normal behaviour for the first days; a compromised network at deployment can be learned as normal | **High** | Population priors from pretraining; low-confidence early window; attack-objective invariants independent of site baseline | Calibration valid with few site events |
-| L-07 | Rare legitimate events (quarterly jobs, new deployments) can resemble low-and-slow attacks | Moderate | Alert requires rarity together with progress toward an attack objective; Verifier calibrates site threshold | Memory write rule and evidence measure tied to objective progress |
-| L-08 | Full L inference needs ~4 × 80 GB accelerators (320 GB total) | Moderate | Weights and caches fp32 with fp64 outputs (D-54); compute and memory budget documented per component | Sparse contact representations and vectorised hot paths |
-| L-09 | Per-entity memory grows with host count × retention period at large CII sites | Moderate | Log-time dyadic memory cells; flood-invariant updates | Retention guarantees under adversarial flooding; adaptive-resolution memory |
-| L-10 | PCAP parsing is a per-packet Python loop; line-rate capture needs flow-level sensors | Low | Flow-state emission from PCAP (D-51); native ingest of Zeek, Suricata, NetFlow, IPFIX, sFlow | Sandboxed parser process with input caps |
-| L-11 | An adaptive adversary can change behaviour once it notices defensive responses | Moderate | Decision support only: humans choose the response; responded-to cases excluded from calibration | Counterfactual calibration w.r.t. the known response policy |
-| L-12 | Explanations attribute an internal quantity close to but not identical with the displayed P_inf; explanation cost grows with descent depth | Moderate | Lens shares, evidence chains and observability-gap annotations shown alongside every forecast | Attribution of the displayed probability integrated over the descent path, with faithfulness tests |
-| L-13 | Threat-actor attribution from network telemetry alone is low-confidence | Low | Attribution shown as a weak prior over actor groups, never as a claim | Type posteriors from technique traces with known detection censoring |
-| L-14 | Causal attention heads model influence but do not certify identified causal structure | Moderate | Causal masks enforce time order and protocol constraints; forensic replay labelled as model-based | Identifiability from defender interventions and protocol constraints; counterfactual replay with uncertainty |
-| L-15 | Physical-consistency checks assume wire-level packet sizes; segmentation offload can exceed them | Low | Offload-aware size bounds; explicit status flag when offload is detected | Credal physical bounds that never exclude a truly possible observation |
+| LIM-01 | Encrypted payloads (TLS 1.3, QUIC, encrypted SNI) shrink the observable surface | Moderate | Timing, sizes, flow structure, graph structure, handshake fingerprints; absence is a status, never benign | Better use of graph-frequency and timing statistics for slow attacks |
+| LIM-02 | Single-vantage segments: sensor reliability cannot be cross-checked, spoofed values harder to discount | Moderate | Low-reliability observation status assigned; evidence weight reduced | Reliability estimation from overlapping vantages and physics consistency |
+| LIM-03 | Public training corpora carry label noise; attack campaigns emulated, not observed in production | Moderate | Corrected label sets used where available; leakage and duplicate audits; novel/known families reported separately | Ground-truth world simulator with known hidden state; information audit (P-14, P-15) |
+| LIM-04 | Thinner coverage of some industrial protocols (PROFINET, EtherNet/IP CIP, BACnet, ICCP, C37.118) | Low | Unknown protocols modelled at flow/timing level with fields marked "not supplied" | Field mappings and simulator scenarios for remaining protocols |
+| LIM-05 | Out-of-order and lossy telemetry leaves the reconstructed timeline incomplete | Low | Bounded reordering with event-time watermarks; loss carried as statuses | Per-sensor loss estimation feeding the reliability model |
+| LIM-06 | Cold start: no established normal behaviour for the first days; a compromised network at deployment can be learned as normal | **High** | Population priors from pretraining; low-confidence early window; attack-objective invariants independent of site baseline | Calibration valid with few site events |
+| LIM-07 | Rare legitimate events (quarterly jobs, new deployments) can resemble low-and-slow attacks | Moderate | Alert requires rarity together with progress toward an attack objective; Verifier calibrates site threshold | Memory write rule and evidence measure tied to objective progress |
+| LIM-08 | Full inference needs ~4 × 80 GB accelerators (320 GB total) | Moderate | Weights and caches fp32 with fp64 outputs (D-54); compute and memory budget documented per component | Sparse contact representations and vectorised hot paths |
+| LIM-09 | Per-entity memory grows with host count × retention period at large CII sites | Moderate | Log-time dyadic memory cells; flood-invariant updates | Retention guarantees under adversarial flooding; adaptive-resolution memory |
+| LIM-10 | PCAP parsing is a per-packet Python loop; line-rate capture needs flow-level sensors | Low | Flow-state emission from PCAP (D-51); native ingest of Zeek, Suricata, NetFlow, IPFIX, sFlow | Sandboxed parser process with input caps |
+| LIM-11 | An adaptive adversary can change behaviour once it notices defensive responses | Moderate | Decision support only: humans choose the response; responded-to cases excluded from calibration | Counterfactual calibration w.r.t. the known response policy |
+| LIM-12 | Explanations attribute an internal quantity close to but not identical with the displayed P_inf; explanation cost grows with descent depth | Moderate | Lens shares, evidence chains and observability-gap annotations shown alongside every forecast | Attribution of the displayed probability integrated over the descent path, with faithfulness tests |
+| LIM-13 | Threat-actor attribution from network telemetry alone is low-confidence | Low | Attribution shown as a weak prior over actor groups, never as a claim | Type posteriors from technique traces with known detection censoring |
+| LIM-14 | Causal attention heads model influence but do not certify identified causal structure | Moderate | Causal masks enforce time order and protocol constraints; forensic replay labelled as model-based | Identifiability from defender interventions and protocol constraints; counterfactual replay with uncertainty |
+| LIM-15 | Physical-consistency checks assume wire-level packet sizes; segmentation offload can exceed them | Low | Offload-aware size bounds; explicit status flag when offload is detected | Credal physical bounds that never exclude a truly possible observation |
 
 ---
 
