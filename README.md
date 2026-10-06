@@ -1,4 +1,4 @@
-# NagaHana — Adversary Foundation Model
+# NagaHana — Adversary Foundation Model for Long-Horizon Threat Forecasting
 
 <div align="right">
 
@@ -8,7 +8,7 @@
 
 > **⚠️ Model Weights Notice**
 > The trained NagaHana (L) weights file is **4.54 GB (fp32)** — too large for GitHub to host.
-> Weights are distributed separately. This repository contains the full source, configuration, evaluation framework, and documentation only.
+> Weights are distributed separately. This repository contains the full source, configuration, and evaluation framework only.
 
 ---
 
@@ -18,7 +18,7 @@
 
 ## What NagaHana Is
 
-**NagaHana — Adversary Foundation Model for Simulation-based Threat Forecasting.**
+**NagaHana — Adversary Foundation Model for Long-Horizon Threat Forecasting.**
 It is an AI world model that learns the evolving state of a computer network from passive telemetry.
 It imagines where an intrusion is heading before the kill chain completes, and gives defenders interpretable, calibrated forecasts and advisory counter-measures.
 
@@ -35,10 +35,8 @@ It imagines where an intrusion is heading before the kill chain completes, and g
 nagahana/
 ├── src/nagahana/        # The model and all supporting packages
 ├── conf/                # YAML configuration files (generated from dataclasses)
-├── docs/                # Architecture, sizing, decisions, ADRs, assumptions, glossary
-├── scripts/             # Utility scripts (smoke test, etc.)
-├── tools/               # Developer tooling (assumption generator, etc.)
 ├── .github/             # CI workflow
+├── RESULTS.md           # Full empirical results, compute profiles, and evaluations
 └── pyproject.toml       # Package metadata and dependencies
 ```
 
@@ -104,37 +102,6 @@ nagahana/
 | `training/L.yaml` | Full L-size training run configuration (1.13 B parameters) |
 | `training/tiny.yaml` | Tiny-width training run for CI/smoke testing |
 | `worldsim/` | Named scenario library: enterprise APT, ransomware, exfiltration, DoS, OT manipulation, slow recon, benign baselines |
-
-### `docs/` — Documentation
-
-| File / folder | What it covers |
-|---|---|
-| `architecture.md` | The canonical design brief: processing story, memory layout, training pipeline, outputs, evaluation |
-| `build-spec.md` | Engineering specification: philosophy, computation contracts, maths per component, training stages, L preset |
-| `sizing.md` | Exact parameter counts (built on meta device), compute profile, memory budget per operating point |
-| `baselines-lr.md` | Logistic-regression baseline protocol, usage, solvers |
-| `limitations.md` | Known limitations, mitigations, and ongoing work |
-| `statphys.md` | Statistical-physics module: thermodynamic readouts, entropies, early-warning system, references |
-| `worldsim.md` | Ground-truth world simulator: design, topology, attacker dynamics, observation, outputs |
-| `assumptions.md` | Master list of engineering assumptions (AS-xx) |
-| `decisions.md` | Generated decisions report (decided, held, proposed) |
-| `glossary.md` | Project vocabulary |
-| `build-agents.md` | Agent and role descriptions for the build |
-| `adr/` | Architecture Decision Records (ADR-0001 through ADR-0009) |
-| `assumptions/` | Per-domain assumption files: agents, data, generator, integration, lr-baseline, perception, precision, statphys, taaft, tstct-memory, worldsim |
-| `sources/` | Literature index |
-
-### `scripts/`
-
-| File | What it does |
-|---|---|
-| `smoke_e2e.py` | End-to-end smoke test: runs one mini-batch through all six pipeline stages and checks invariants |
-
-### `tools/`
-
-| File | What it does |
-|---|---|
-| `gen_assumptions.py` | Generates the `docs/assumptions.md` master list and per-domain assumption files from the source of truth in `governance/assumptions.py` |
 
 ### `.github/workflows/`
 
