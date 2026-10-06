@@ -1,3 +1,22 @@
-# Decoder (src/nagahana/models/decoder, roles/decoder.py).
-view_flattening: ???           # held: D-05 (typed multigraph / supra-graph / reducibility merge / combination)
-candidate_edges: ???           # how candidates are formed from known topology + shared limits
+# Decoder (build-spec section 2.4). (models/config/components.py, DecoderConfig).
+# Generated from the typed dataclasses by nagahana.core.config.generate_conf (D-57). Do not edit by hand:
+# change the dataclass default and regenerate; tests compare this file with the code.
+decoder:
+  # [build-spec section 4] conditioning trunk width
+  hidden: 512
+  # [AS-33, AS-106] service-class buckets of categorical columns
+  n_service_classes: 64
+  # [build-spec section 4] width of the candidate-hyperedge heads
+  edge_hidden: 512
+  # [AS-38] role embedding width in the field head's conditioning
+  role_dim: 32
+  # [AS-110] log-space means are clipped at this magnitude
+  max_log_mean: 50.0
+  # [AS-110] lower bound of the learned Gaussian log-scale
+  log_scale_min: -5.0
+  # [AS-110] upper bound of the learned Gaussian log-scale
+  log_scale_max: 3.0
+  # [AS-110] bits decoded per bitmask column (equals FieldEncoderConfig.max_bits)
+  max_bits: 16
+  # [AS-111] member-swap negatives per observed hyperedge
+  edge_negatives: 1

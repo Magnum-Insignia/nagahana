@@ -1,0 +1,12 @@
+# Observability analysis (`analytics.observability`).
+# Generated from nagahana.analytics.config.ObservabilityConfig by render_yaml; the dataclass is the single
+# source of truth. Every value equals its dataclass default (check_yaml_file verifies it).
+observability:
+  # coverage bins in seconds
+  bin_seconds: 3600.0
+  # a bin is a gap when coverage falls below this share of the field's median
+  gap_drop: 0.5
+  # shortest reported gap in bins
+  gap_min_bins: 1
+  # seed of every random choice of the analysis
+  seed: 0

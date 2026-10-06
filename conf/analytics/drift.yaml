@@ -1,0 +1,36 @@
+# Covariate, label and concept drift (`analytics.drift`).
+# Generated from nagahana.analytics.config.DriftConfig by render_yaml; the dataclass is the single
+# source of truth. Every value equals its dataclass default (check_yaml_file verifies it).
+drift:
+  # rows per sample for the MMD test (seeded)
+  mmd_max_rows: 2000
+  # permutations of the MMD test
+  mmd_permutations: 500
+  # false discovery rate of the per-feature tests
+  ks_alpha: 0.05
+  # multiple-testing procedure: bh (Benjamini-Hochberg) or by (Benjamini-Yekutieli)
+  fdr: bh
+  # population stability index bins (reference quantiles)
+  psi_bins: 10
+  # floor of empty PSI bins
+  psi_epsilon: 0.0001
+  # ADWIN confidence
+  adwin_delta: 0.002
+  # ADWIN buckets per size
+  adwin_max_buckets: 5
+  # Page-Hinkley tolerated change
+  ph_delta: 0.005
+  # Page-Hinkley alarm threshold
+  ph_threshold: 50.0
+  # DDM samples before testing
+  ddm_min_samples: 30
+  # DDM warning level (standard deviations)
+  ddm_warning: 2.0
+  # DDM drift level (standard deviations)
+  ddm_drift: 3.0
+  # bin of the streamed statistics in seconds
+  stream_bin_seconds: 60.0
+  # L2 penalty of the black-box classifier fitted for BBSE
+  bbse_l2: 0.001
+  # seed of every random choice of the analysis
+  seed: 0

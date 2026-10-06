@@ -1,0 +1,24 @@
+# Information audit (`lab.info_audit`, P-15).
+# Generated from nagahana.analytics.config.InfoAuditConfig by render_yaml; the dataclass is the single
+# source of truth. Every value equals its dataclass default (check_yaml_file verifies it).
+info_audit:
+  # proposals enabled for this run; P-15 must be listed for the audit to run
+  enabled_proposals: []
+  # neighbours of the k-NN estimators; the point estimate is the median over them
+  k_values: [3, 5, 10]
+  # smallest observation-pattern stratum estimated by k-NN
+  min_stratum: 20
+  # discrete entropy correction: miller_madow or none
+  correction: miller_madow
+  # tie-breaking noise in standard deviations
+  jitter: 1.0e-10
+  # half-sample replicates of the subsampling interval
+  n_sub: 20
+  # interval level
+  level: 0.95
+  # seeded row sample for the nearest-neighbour error
+  nn_max_rows: 50000
+  # forecast lags k of I(O_t; S_t+k)
+  lags: [0]
+  # seed of every random choice of the analysis
+  seed: 0

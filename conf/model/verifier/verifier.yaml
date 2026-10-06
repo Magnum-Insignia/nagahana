@@ -1,0 +1,40 @@
+# Verifier (build-spec section 2.10). (models/config/components.py, VerifierConfig).
+# Generated from the typed dataclasses by nagahana.core.config.generate_conf (D-57). Do not edit by hand:
+# change the dataclass default and regenerate; tests compare this file with the code.
+verifier:
+  # [build-spec section 4] model width
+  dim: 1024
+  # [build-spec section 4] pre-norm blocks of the process-reward model
+  blocks: 4
+  # [build-spec section 4] attention heads per block
+  heads: 16
+  # [AS-32] SwiGLU hidden width
+  mlp_hidden: 2816
+  # [D-45, AS-25] temperatures proposed for P_inf, stage, compromise and advice
+  n_output_families: 4
+  # [AS-25] reliability-diagram bins
+  reliability_bins: 10
+  # [AS-25, AS-721] scored pairs needed before a calibration is proposed; at least the split-conformal minimum for conformal_alpha
+  min_pairs: 999
+  # [AS-259] systematic gap over the last resolutions
+  drift_window: 12
+  # [AS-25] CUSUM reference value (drift allowance)
+  cusum_k: 0.05
+  # [AS-25] CUSUM decision threshold
+  cusum_h: 5.0
+  # [AS-25] target false-positive rate of split-conformal alert thresholds
+  conformal_alpha: 0.001
+  # [AS-25] lower end of the ML temperature search interval
+  temperature_min: 0.25
+  # [AS-25] upper end of the ML temperature search interval
+  temperature_max: 4.0
+  # [AS-258] Page-Hinkley allowance on the standardised latent deviation
+  ph_delta: 0.1
+  # [AS-258] Page-Hinkley alarm threshold
+  ph_lambda: 10.0
+  # [AS-258] observations before Welford statistics are trusted for alarms
+  ph_warmup: 30
+  # [AS-259] systematic-gap alert on |sum(f - y)| / n over the drift window
+  gap_threshold: 0.2
+  # [build-spec section 2.8] PRM context: top entities by compromise, as for the Forecaster
+  context_entities: 48

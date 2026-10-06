@@ -1,0 +1,40 @@
+# Data windows and optimisation (build-spec section 3). (models/config/components.py, TrainingConfig).
+# Generated from the typed dataclasses by nagahana.core.config.generate_conf (D-57). Do not edit by hand:
+# change the dataclass default and regenerate; tests compare this file with the code.
+training:
+  # [AS-317, build-spec section 4] updates per training window (2,048 positions)
+  window_updates: 1024
+  # [build-spec section 3] windows per micro-batch
+  batch_windows: 8
+  # [AS-317] entities per window (working context)
+  max_entities: 4096
+  # [AS-113] stage-3 field masking probability
+  mask_ratio: 0.15
+  # [AS-05] free bits of the KL terms, nats
+  free_bits: 1.0
+  # [AS-05] dynamics weight of the balanced KL
+  beta_dyn: 0.5
+  # [AS-05] representation weight of the balanced KL
+  beta_rep: 0.1
+  # [build-spec section 3] weight of the candidate-hyperedge loss
+  lambda_edge: 0.5
+  # [AS-10] L1 weight on the causal gates
+  lambda_gate: 0.001
+  # [AS-406] AdamW learning rate after warm-up
+  lr: 0.0003
+  # [AS-406] AdamW weight decay on matrices
+  weight_decay: 0.1
+  # [AS-406] linear warm-up steps
+  warmup_steps: 2000
+  # [AS-406] global gradient-norm clip
+  grad_clip: 1.0
+  # [AS-39] matrix compute precision with fp32 master weights
+  precision: bf16
+  # [AS-326] train / test / validation shares of full training
+  splits_full: [0.6, 0.2, 0.2]
+  # [AS-326] train / validation shares of pretraining
+  splits_pretrain: [0.7, 0.3]
+  # [AS-26] rank of the site calibration adapters
+  lora_rank: 16
+  # [AS-26] scale of the site calibration adapters
+  lora_alpha: 32.0

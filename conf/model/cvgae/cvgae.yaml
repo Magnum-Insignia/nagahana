@@ -1,11 +1,30 @@
-# CVG-AE (src/nagahana/models/cvgae). Encoder registry name selects the implementation.
-encoder: hgnn-mean-reference   # reference baseline; production entry: pyg-hypergraphconv
-planes: ???                    # held: D-04 (how planes are formed)
-in_dim: ???
-dim: ???
-layers: ???                    # horizontal layers per plane branch (A-04)
-cont_dim: ???                  # continuous latent width
-disc_groups: ???               # categorical latent: groups G
-disc_classes: ???              # categorical latent: classes C
-latent_space: ???              # version tag of the shared latent space (P-19)
-reconstruction_target: ???     # held: D-11a
+# CVG-AE (build-spec section 2.3). (models/config/components.py, CVGAEConfig).
+# Generated from the typed dataclasses by nagahana.core.config.generate_conf (D-57). Do not edit by hand:
+# change the dataclass default and regenerate; tests compare this file with the code.
+cvgae:
+  # [build-spec section 4] branch width
+  dim: 256
+  # [A-04, build-spec section 4] horizontal layers per plane branch
+  layers: 4
+  # [AS-03] attention heads of the hyperedge-to-node aggregation
+  heads: 4
+  # [AS-108] typed update MLP hidden width = mlp_mult x dim
+  mlp_mult: 2
+  # [D-20, build-spec section 4] Dc, continuous latent width (rates, entropies, timings)
+  cont_dim: 128
+  # [D-20, build-spec section 4] G categorical latent groups (structure, stage)
+  disc_groups: 16
+  # [D-20, build-spec section 4] C classes per categorical group
+  disc_classes: 32
+  # [AS-05] uniform mixing of categorical posteriors (DreamerV3)
+  unimix: 0.01
+  # [D-49, AS-108] hop-distance bias buckets
+  max_hops_bias: 4
+  # [AS-108] hyperedge-size bias buckets, bucket floor(log2 |e|)
+  size_buckets: 8
+  # [AS-108] learned log-time age buckets (1 ms to about 50 days); no decay imposed
+  age_buckets: 32
+  # [AS-31, AS-108] periodic frequencies of the log(1 + age) encoding
+  age_frequencies: 8
+  # [AS-108] logvar = b tanh(raw / b), a smooth bound for numerical safety
+  logvar_bound: 10.0

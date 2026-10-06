@@ -1,0 +1,24 @@
+# Environment store, long-term memory, Imagination store (build-spec section 2.6). (models/config/components.py, MemoryConfig).
+# Generated from the typed dataclasses by nagahana.core.config.generate_conf (D-57). Do not edit by hand:
+# change the dataclass default and regenerate; tests compare this file with the code.
+memory:
+  # [AS-11] working Environment slots per entity
+  slots_per_entity: 512
+  # [AS-11] first log-time bucket width, seconds
+  bucket_delta0: 0.001
+  # [AS-11] log-time buckets (1 ms to about 50 days)
+  n_buckets: 32
+  # [AS-11, build-spec section 4] Titans-style long-term memory width
+  longterm_dim: 1024
+  # [AS-155] long-term memory MLP hidden width
+  longterm_hidden: 2048
+  # [AS-13] M_im: past triggers kept in Imagination
+  imagination_triggers: 8
+  # [D-36, AS-11] forgetting fraction alpha_k per trigger, a function of the trigger index only
+  retention_alpha: 0.02
+  # [AS-150] slot quota per dyadic time cell; 7 x (2 x 32 + 2) + 1 = 463 <= 512
+  bucket_slots: 7
+  # [AS-155] eta, momentum of the long-term memory surprise
+  longterm_momentum: 0.9
+  # [AS-155] theta, step size on the memory-loss gradient (mean over the trigger's pairs)
+  longterm_step: 0.05

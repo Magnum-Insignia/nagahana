@@ -1,0 +1,97 @@
+# Scenario tiny for the ground-truth world simulator (P-14).
+# Generated from nagahana.worldsim.config dataclasses; edit and it is re-validated on load.
+name: tiny
+description: Small fixture for tests (not a model or a realistic site).
+network: tiny-net
+topology:
+  counts:
+  - - workstation
+    - 3
+  - - file_server
+    - 1
+  - - domain_controller
+    - 1
+  - - dmz_web
+    - 1
+  - - gateway
+    - 1
+  enterprise_segments: 2
+  allow_cross_segment: true
+  ot_from_enterprise: true
+  ipv4_base: 10.0.0.0
+benign:
+  session_rate_per_host_hour: 60.0
+  diurnal:
+  - 10
+  - 10
+  - 10
+  - 10
+  - 10
+  - 10
+  - 10
+  - 10
+  - 10
+  - 10
+  - 10
+  - 10
+  - 10
+  - 10
+  - 10
+  - 10
+  - 10
+  - 10
+  - 10
+  - 10
+  - 10
+  - 10
+  - 10
+  - 10
+  weekly:
+  - 10
+  - 10
+  - 10
+  - 10
+  - 10
+  - 10
+  - 10
+  ot_poll_interval_s: 2.0
+  ot_poll_jitter_s: 0.2
+  heavy_tail_alpha: 1.6
+attack:
+  campaign: apt_full
+  enabled: true
+  start_min_s: 30.0
+  start_max_s: 90.0
+  vuln_density: 0.5
+  local_vuln_density: 0.5
+  credential_reuse: 0.3
+  max_events: 32
+defender:
+  enabled: false
+  response_rate_per_hour: 4.0
+  suspicion_threshold: 3.0
+  isolate: 2
+  block: 1
+  patch: 1
+observation:
+  sensors:
+  - kind: tap
+    coverage:
+    - enterprise
+    - ot
+    granularity: flow-state
+    sampling_n: 1
+    active_timeout_s: 60.0
+    inactive_timeout_s: 15.0
+    packet_loss: 0.0
+    clock_skew_s: 0.0
+    clock_drift_ppm: 0.0
+    detection_prob: 0.6
+    false_alarm_per_hour: 1.0
+    reliability: 0.0
+simulation:
+  horizon_s: 600.0
+  event_slots: 512
+  start_epoch_s: 1700000000.0
+  start_jitter_s: 604800.0
+novelty: ''

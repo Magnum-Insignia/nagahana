@@ -1,0 +1,24 @@
+# Input layer (build-spec section 2.1). (models/config/components.py, FieldEncoderConfig).
+# Generated from the typed dataclasses by nagahana.core.config.generate_conf (D-57). Do not edit by hand:
+# change the dataclass default and regenerate; tests compare this file with the code.
+inputs:
+  # [P-22, AS-323] field-slot table size; at least the number of columns
+  n_slots: 128
+  # [build-spec section 4] width of one field state
+  d_field: 128
+  # [AS-33] hashed categorical rows (ports, protocols, codes)
+  hash_rows: 65536
+  # [AS-31] periodic-embedding frequencies per scalar
+  n_frequencies: 16
+  # [AS-31] initial frequency scale of the periodic embedding (Gorishniy et al., NeurIPS 2022)
+  freq_sigma: 1.0
+  # [AS-100] bits of a bitmask field that get embeddings (TCP flags use 6 to 9)
+  max_bits: 16
+  # [build-spec section 2.1] attention-pooling heads from field states to the update vector
+  pool_heads: 4
+  # [build-spec section 4] width of the update vector u_i
+  d_update: 256
+  # [D-50] clock features are built and off when training on lab datasets
+  clock_features: false
+  # [AS-100] |signed_log1p(x)| is clipped here before the periodic embedding (e^50 is about 5e21)
+  max_log_magnitude: 50.0

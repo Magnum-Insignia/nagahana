@@ -1,0 +1,26 @@
+# Label and leakage audits (`analytics.leakage`).
+# Generated from nagahana.analytics.config.LeakageConfig by render_yaml; the dataclass is the single
+# source of truth. Every value equals its dataclass default (check_yaml_file verifies it).
+leakage:
+  # single-feature separability at or above this is flagged
+  auroc_flag: 0.95
+  # folds of the out-of-fold category rates
+  oof_folds: 5
+  # additive smoothing of the out-of-fold category rates
+  oof_smoothing: 1.0
+  # near duplicates: tolerance on the slog1p scale
+  near_tolerance: 0.05
+  # near duplicates: share of matching columns
+  near_threshold: 0.95
+  # near duplicates: LSH bands
+  near_bands: 24
+  # near duplicates: columns sampled per band
+  near_rows_per_band: 8
+  # near duplicates: buckets above this size are verified against pivots
+  near_max_bucket: 64
+  # near duplicates: pivots per oversized bucket
+  near_pivots: 8
+  # near duplicates: seeded row sample above this size
+  near_max_rows: 500000
+  # seed of every random choice of the analysis
+  seed: 0

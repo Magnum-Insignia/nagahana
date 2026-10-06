@@ -1,1 +1,1 @@
-"""Framework pieces with no model logic: errors, registries, roles, modes, config, introspection."""
+"""Framework pieces with no model logic: errors, registries, roles, modes, configuration, introspection."""

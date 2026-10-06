@@ -2,36 +2,40 @@
 
 What this is
 ------------
-A `Registry` maps a name ("hgnn-reference", "jem", "mtu_bound", …) to a factory. Callers ask the
-registry for a component by the name found in config, never by importing a concrete class. This is
-the mechanism behind the owner's request for a codebase that is "highly decoupled, transformable
-further, modular … for multiple changes over and over" [Q-45]:
-- replacing an implementation = registering a new name + changing one config value;
-- running two variants side by side (an ablation, P-17) = two config files.
+A `Registry` maps a name ("hgnn-attn", "jem", "mtu_bound", ...) to a factory. Callers ask the
+registry for a component by the name found in configuration, never by importing a concrete class:
+
+- replacing an implementation means registering a new name and changing one configuration value;
+- running two variants side by side (an ablation, P-17) means two configurations.
 
 Governance built in
 -------------------
 An entry can declare
-- `requires=("D-12", ...)`: decisions that must be DECIDED before it can be built. Building it
-  while they are held raises `DecisionHeld` (no silent defaults [Q-39]);
-- `proposal="P-18"`: the proposal it implements. Building it requires that ID in
-  `enabled_proposals`.
-Registration itself is always allowed, so templates and experiments can live in the tree without
-running by accident.
+- `requires`: decisions the entry depends on. Given as a sequence of IDs, any option in force is
+  accepted; given as a mapping ID -> options, the entry exists only under those options. At build
+  time every required decision is resolved with `governance.decisions.require`: a decided entry
+  passes, a held entry resolves to its option in force (the run's configured option, else the
+  working option of its assumption), and an option the entry does not implement raises
+  `InvalidOption`;
+- `proposal`: the proposal it implements. Building it requires that ID in `enabled_proposals`.
+
+Registration itself is always allowed and validates the IDs, so a typo fails at import time.
 
 Why not only Hydra's `_target_`?
 --------------------------------
-Hydra (`hydra.utils.instantiate`) builds objects from import paths. That is convenient, but it
-bypasses the governance checks above and ties configs to module paths. The registry keeps configs
-stable when code moves. Hydra configs select registry names, so the two combine.
+Hydra (`hydra.utils.instantiate`) builds objects from import paths. That bypasses the governance
+checks above and ties configuration files to module paths. The registry keeps configuration stable
+when code moves; Hydra configuration selects registry names, so the two combine.
 """
 
 from __future__ import annotations
 
-from collections.abc import Callable, Collection, Iterable
-from dataclasses import dataclass
+from collections.abc import Callable, Collection, Iterable, Mapping
+from dataclasses import dataclass, field
+from types import MappingProxyType
 from typing import Any, Generic, TypeVar
 
+from nagahana.core.errors import InvalidOption
 from nagahana.governance import decisions
 
 T = TypeVar("T")
@@ -43,11 +47,12 @@ class Entry(Generic[T]):
 
     Attributes
     ----------
-    name: registry key used in config.
+    name: registry key used in configuration.
     factory: class or function that builds the component.
-    requires: decisions that must be DECIDED before building.
-    proposal: proposal ID this entry implements (None if it implements decided design).
+    requires: IDs of the decisions the entry depends on.
+    proposal: proposal ID this entry implements (None if it implements decided or configured design).
     summary: one line shown by the CLI.
+    options: decision ID -> the options under which the entry exists (absent: any option in force).
     """
 
     name: str
@@ -55,6 +60,7 @@ class Entry(Generic[T]):
     requires: tuple[str, ...]
     proposal: str | None
     summary: str
+    options: Mapping[str, frozenset[str]] = field(default_factory=dict)
 
 
 class Registry(Generic[T]):
@@ -68,25 +74,39 @@ class Registry(Generic[T]):
         self,
         name: str,
         *,
-        requires: Iterable[str] = (),
+        requires: Iterable[str] | Mapping[str, Iterable[str]] = (),
         proposal: str | None = None,
         summary: str = "",
     ) -> Callable[[T], T]:
         """Decorator: register `factory` under `name`.
 
-        The decision and proposal IDs are validated at registration time. A typo in an ID fails
-        at import, not later at run time.
+        Decision and proposal IDs are validated here, and so is every option named in a `requires`
+        mapping (it must be admissible for a held decision), so a typo fails at import, not at run time.
         """
-        req = tuple(requires)
-        for key in req:
-            decisions.get(key)  # raises KeyError on unknown IDs
+        req: tuple[str, ...]
+        opts: dict[str, frozenset[str]] = {}
+        if isinstance(requires, Mapping):
+            req = tuple(requires)
+            for key, allowed in requires.items():
+                d = decisions.get(key)                        # KeyError on unknown IDs
+                if d.status is not decisions.Status.HELD:
+                    raise InvalidOption(f"{name!r}: option restrictions apply to held decisions only, {d.id} is {d.status.value}")
+                allowed_set = frozenset(allowed)
+                bad = sorted(allowed_set - set(d.admissible))
+                if not allowed_set or bad:
+                    raise InvalidOption(f"{name!r}: options {bad or '(none)'} are not admissible for {d.id}")
+                opts[d.id] = allowed_set
+        else:
+            req = tuple(requires)
+            for key in req:
+                decisions.get(key)                           # KeyError on unknown IDs
         if proposal is not None:
             decisions.get(proposal)
 
         def deco(factory: T) -> T:
             if name in self._entries:
                 raise ValueError(f"{self.kind} registry already has an entry named {name!r}")
-            self._entries[name] = Entry(name, factory, req, proposal, summary)
+            self._entries[name] = Entry(name, factory, req, proposal, summary, MappingProxyType(opts))
             return factory
 
         return deco
@@ -109,11 +129,18 @@ class Registry(Generic[T]):
     ) -> Any:
         """Build a component after checking its governance gates.
 
-        Order of checks: required decisions first (they are the owner's), then the proposal gate.
+        Order of checks: required decisions first (each resolved to its decided value or to the option
+        in force), then the option restrictions of the entry, then the proposal gate.
         """
         e = self.entry(name)
         for key in e.requires:
-            decisions.require(key)
+            d = decisions.require(key, by=f"{self.kind}:{name}")
+            allowed = e.options.get(d.id)
+            if allowed is not None and d.value not in allowed:
+                raise InvalidOption(
+                    f"{self.kind} {name!r} exists only under {d.id} options {sorted(allowed)}; "
+                    f"the option in force is {d.value!r} (configure it with governance.decisions.configure)."
+                )
         if e.proposal is not None:
             decisions.require_proposal(e.proposal, enabled_proposals)
         factory: Any = e.factory

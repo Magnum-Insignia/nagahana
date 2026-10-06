@@ -1,4 +1,0 @@
-# Experiment tracking (src/nagahana/tracking). Every run logs the governance snapshot.
-backend: mlflow
-tracking_uri: ???              # e.g. file:./mlruns or the workstation's MLflow server
-experiment: ???

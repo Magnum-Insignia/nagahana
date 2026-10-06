@@ -1,0 +1,32 @@
+# Advisor (build-spec section 2.9). (models/config/components.py, AdvisorConfig).
+# Generated from the typed dataclasses by nagahana.core.config.generate_conf (D-57). Do not edit by hand:
+# change the dataclass default and regenerate; tests compare this file with the code.
+advisor:
+  # [build-spec section 4] model width
+  dim: 1024
+  # [build-spec section 4] decoder-style blocks
+  blocks: 4
+  # [build-spec section 4] attention heads per block
+  heads: 16
+  # [AS-32] SwiGLU hidden width
+  mlp_hidden: 2816
+  # [build-spec section 2.9] D3FEND action slots
+  n_actions: 256
+  # [build-spec section 2.9] beam width W
+  beam_width: 64
+  # [build-spec section 2.9] counter-sequence length
+  max_steps: 3
+  # [build-spec section 2.9] re-imagined routes per candidate
+  rollouts: 50
+  # [AS-24] tail share of the CVaR ranking
+  cvar_alpha: 0.2
+  # [AS-23] kappa in -delta P_inf - kappa x cost
+  cost_weight: 0.1
+  # [AS-23, AS-254] criticality per entity kind in vocab.NODE_KINDS order; OT highest (D-34)
+  criticality: [1.0, 1.5, 1.0, 5.0, 0.2, 3.0, 1.5, 2.0]
+  # [AS-28] feasibility gate Phi_phys <= tau on predicted effects
+  physics_tau: 0.001
+  # [AS-257] eta of the policy-improvement target q proportional to pi exp(J / eta)
+  improvement_temperature: 0.1
+  # [AS-257] candidates evaluated per trigger in the policy-improvement loss
+  train_candidates: 8

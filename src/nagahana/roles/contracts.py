@@ -1,8 +1,8 @@
-"""What the roles hand to each other and to people: the output contracts (docs/architecture.md §6).
+"""What the roles hand to each other and to people: the output contracts (docs/architecture.md section 6).
 
 The problem statement requires three outputs per forecast: an infiltration probability over the
 next K windows, a predicted MITRE ATT&CK stage, and the driving features (attention or attribution).
-"Black-box outputs without interpretability are not acceptable." The owner's design adds belief and
+"Black-box outputs without interpretability are not acceptable." The design adds belief and
 trust readouts, energy readouts, advisory counter-measure sequences, Verifier reports, a decoded view
 and forensic reports ([Q-17], ARCH #26).
 
@@ -30,6 +30,19 @@ class AttackStage(enum.Enum):
     LATERAL_MOVEMENT = "lateral_movement"
     COMMAND_AND_CONTROL = "command_and_control"
     EXFILTRATION = "exfiltration"
+    # The rest of `models.vocab.STAGES` (AS-19: "none" + the 14
+    # ATT&CK Enterprise tactics), so the model's 15-class stage head converts one-to-one. Values equal the
+    # vocab names; members above keep their order and values.
+    NONE = "none"
+    RESOURCE_DEVELOPMENT = "resource_development"
+    EXECUTION = "execution"
+    PERSISTENCE = "persistence"
+    PRIVILEGE_ESCALATION = "privilege_escalation"
+    DEFENSE_EVASION = "defense_evasion"
+    CREDENTIAL_ACCESS = "credential_access"
+    DISCOVERY = "discovery"
+    COLLECTION = "collection"
+    IMPACT = "impact"
 
 
 class D3FENDTactic(enum.Enum):
@@ -80,19 +93,23 @@ class ImaginedPath:
 
 @dataclass(frozen=True)
 class ComputeRecord:
-    """What a forecast cost: inference-time scaling is reported, never hidden (DESIGN_LOG 2026-09-28)."""
+    """What a forecast cost: inference-time scaling is reported, never hidden (D-44)."""
 
     samples_n: int
     horizon_k: int
     refinement_steps: int
     wall_time_s: float
+    # D-44: the loop passes are a run-time budget recorded with each forecast. One field per looped
+    # model (AS-08).
+    tstct_passes: int
+    taaft_passes: int
 
 
 @dataclass(frozen=True)
 class ForecastBundle:
     """The Forecaster's output for one trigger.
 
-    Invariants: len(p_inf) = K; P_inf(k) ∈ [0,1] and non-decreasing in k (it is P(τ ≤ k)); each row
+    Invariants: len(p_inf) = K; P_inf(k) in [0, 1] and non-decreasing in k (it is P(tau <= k)); each row
     of stage_probs sums to 1.
     """
 
@@ -114,7 +131,7 @@ class ForecastBundle:
         for i, p in enumerate(self.p_inf):
             _prob(p, f"P_inf({i + 1})")
             if i and p + 1e-12 < self.p_inf[i - 1]:
-                raise InvariantViolation("P_inf(k) must be non-decreasing: it is P(first infiltration ≤ k)")
+                raise InvariantViolation("P_inf(k) must be non-decreasing: it is P(first infiltration <= k)")
         if len(self.stage_probs) != k:
             raise InvariantViolation("stage_probs needs one row per step")
         for row in self.stage_probs:
@@ -131,11 +148,11 @@ class ForecastBundle:
 class BeliefReadout:
     """Belief and trust from TAAFT's belief-trust lens (Imagination only, D-35)."""
 
-    entity_compromise: Mapping[str, tuple[float, float]]   # entity → (mean, std)
-    suspicion_floor: float                                  # assume-breach floor: > 0 by design (ARCH §4.7)
+    entity_compromise: Mapping[str, tuple[float, float]]   # entity -> (mean, std)
+    suspicion_floor: float                                  # assume-breach floor: > 0 by design (ARCH section 4.7)
     stage_posterior: Mapping[AttackStage, float]
     goal_posterior: Mapping[str, float]
-    telemetry_trust: Mapping[str, float]                    # source or field → trust in [0, 1]
+    telemetry_trust: Mapping[str, float]                    # source or field -> trust in [0, 1]
     type_posterior: Mapping[str, float] = field(default_factory=dict)  # proposal P-13
 
     def __post_init__(self) -> None:
@@ -170,7 +187,19 @@ class CounterSequence:
     delta_p_inf: float           # change in P_inf(K) after re-imagination (negative = risk reduced)
     disruption_cost: float       # priced per asset (pricing held: D-03b)
     feasible: bool               # its predicted effects respect the physics boundary
-    information_value: float     # uncertainty it removes (DESIGN_LOG 2026-09-28)
+    information_value: float     # uncertainty it removes (information value)
+    # AS-24: the risk view over imagined routes, reported beside the expected delta P_inf (`delta_p_inf`).
+    # None when the sequence was not evaluated over routes.
+    delta_p_inf_cvar: float | None = None    # CVaR_alpha of delta P_inf over routes (the worst alpha share)
+    delta_p_inf_worst: float | None = None   # the worst route's delta P_inf
+    cvar_alpha: float | None = None          # alpha used
+    infeasible_reasons: tuple[str, ...] = () # rule or physics checks that failed (empty when feasible)
+
+    def __post_init__(self) -> None:
+        if self.cvar_alpha is not None and not 0.0 < self.cvar_alpha <= 1.0:
+            raise InvariantViolation("cvar_alpha must be in (0, 1]")
+        if self.feasible and self.infeasible_reasons:
+            raise InvariantViolation("a feasible sequence cannot carry infeasibility reasons")
 
 
 @dataclass(frozen=True)
@@ -237,7 +266,7 @@ class OutcomeForecastPair:
 
 @dataclass(frozen=True)
 class ForensicReport:
-    """Forensic replay of an uploaded capture ([Q-17]; ARCH §7)."""
+    """Forensic replay of an uploaded capture ([Q-17]; ARCH section 7)."""
 
     timeline: Sequence[tuple[float, str]]                 # (time, what would have been forecast)
     narrative: Sequence[tuple[AttackStage, str, float]]   # (stage, description, time)

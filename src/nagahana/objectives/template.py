@@ -1,20 +1,18 @@
-"""The one loss template shared by every component (legend 00; D-37, [Q-41]).
+"""The one loss template shared by every component (D-37).
 
-    𝓛_c = 𝓛_c^task + λ_phys · Φ_phys + λ_E · 𝓛_c^E + λ_S · S
+    L_c = L_c^task + lambda_phys Phi_phys + lambda_E L_c^E + lambda_S S
 
-- 𝓛_c^task: the component's own objective (masked reconstruction for the Simulator; dynamics,
-  fidelity and adversary return for the Forecaster; counter-sequence objective for the Advisor;
-  calibration and human feedback for the Verifier; conditional generative loss for the Generator).
-- Φ_phys: the shared physics term (physics/term.py). One term, reused everywhere.
-- 𝓛_c^E: the shared energy term (models/taaft/energy.py). Which uses are in v1 is held (D-11b).
+- L_c^task: the component's own objective (masked reconstruction for the Simulator; dynamics, fidelity and
+  adversary return for the Forecaster; the counter-sequence objective for the Advisor; calibration and human
+  feedback for the Verifier; the conditional generative loss for the Generator).
+- Phi_phys: the shared physics term (physics/term.py). One term, reused everywhere.
+- L_c^E: the shared energy term (models/taaft/energy.py). Which energy jobs are in v1 is the held D-11b,
+  resolved to its working option (AS-16).
 - S: a proper scoring loss (objectives/scoring.py).
 
-"include a shared term only where the matrix marks it" (legend 00). `USAGE` is that matrix, as
-data. A component may use only the shared terms its row allows, and every term it uses needs an
-explicit λ (no defaults). The Decoder's row is empty: it has no physics of its own (D-37).
-
-The matrix below is legend 00 as drawn on 2026-09-29, with the new role names. Revisit it as TAAFT's
-design settles; it is one place to edit.
+A component includes a shared term only where the matrix marks it. `USAGE` is that matrix, as data. A
+component may use only the shared terms its row allows, and every term it uses needs an explicit lambda (no
+defaults). The Decoder's row is empty: it has no physics of its own (D-37).
 """
 
 from __future__ import annotations
@@ -26,7 +24,7 @@ import torch
 from nagahana.core.errors import ConfigMissing, InvariantViolation
 from nagahana.core.roles import Role
 
-#: Shared terms each role's loss may include (legend 00).
+#: Shared terms each role's loss may include.
 USAGE: dict[Role, frozenset[str]] = {
     Role.SIMULATOR: frozenset({"physics"}),
     Role.FORECASTER: frozenset({"physics", "energy", "scoring"}),
@@ -38,31 +36,31 @@ USAGE: dict[Role, frozenset[str]] = {
 
 
 class ComponentLoss:
-    """𝓛_c for one role. `weights` maps each used shared term to its λ (> 0).
+    """L_c for one role. `weights` maps each used shared term to its lambda (> 0).
 
     Parameters
     ----------
     role: whose loss this is.
-    weights: {"physics": λ_phys, "energy": λ_E, "scoring": λ_S}. Only terms in USAGE[role] are allowed,
-        and all of them must be given (write the matrix change first if a term should be dropped).
+    weights: {"physics": lambda_phys, "energy": lambda_E, "scoring": lambda_S}. Only terms in USAGE[role] are
+        allowed, and all of them must be given (change the matrix first if a term should be dropped).
     """
 
     def __init__(self, role: Role, weights: Mapping[str, float]) -> None:
         allowed = USAGE[role]
         extra = set(weights) - allowed
         if extra:
-            raise InvariantViolation(f"{role.value} may not use shared terms {sorted(extra)} (legend 00 matrix)")
+            raise InvariantViolation(f"{role.value} may not use shared terms {sorted(extra)} (usage matrix)")
         missing = allowed - set(weights)
         if missing:
-            raise ConfigMissing(f"{role.value} loss needs λ for {sorted(missing)} (no defaults)")
+            raise ConfigMissing(f"{role.value} loss needs lambda for {sorted(missing)} (no defaults)")
         for k, w in weights.items():
             if float(w) <= 0:
-                raise InvariantViolation(f"λ for {k!r} must be > 0")
+                raise InvariantViolation(f"lambda for {k!r} must be > 0")
         self.role = role
         self.weights = {k: float(v) for k, v in weights.items()}
 
     def __call__(self, task: torch.Tensor, shared: Mapping[str, torch.Tensor]) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
-        """Return (𝓛_c, breakdown). `shared` must hold a scalar for every used term."""
+        """Return (L_c, breakdown). `shared` must hold a scalar for every used term."""
         missing = set(self.weights) - set(shared)
         if missing:
             raise InvariantViolation(f"shared terms not computed: {sorted(missing)}")

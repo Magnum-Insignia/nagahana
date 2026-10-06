@@ -24,6 +24,15 @@ Three facts about KV caches that shape the contract
    latents z (CVG-AE space), not raw keys and values. Forecasts must be projected back into z to be
    decoded (proposal P-19).
 
+Element precision (D-54)
+------------------------
+Both caches store keys and values in single precision: `CACHE_DTYPE` = torch.float32, 4 bytes per
+element (`CACHE_ELEMENT_BYTES`), so one cached position takes 2 · L · H · d_h · 4 bytes. The owner's
+follow-up to D-54 (2026-10-02, "Caches fp32 too") extends "fp32 overall" from the weights to the
+Environment and Imagination caches: what is written is what the fp32 weights computed, with no
+16-bit rounding on the way into memory. Training's bf16 autocast (AS-39) may produce 16-bit K/V
+inside a forward pass; the stores cast them to fp32 when they are written.
+
 Prior art for bounded or extended caches (refs.md): Transformer-XL segment caching (#L2388);
 Memorizing Transformers, kNN retrieval over a large external KV memory (#L2402); Infini-attention
 (#L2409); Titans neural long-term memory (#L2423). Which of these bounds our caches is open (D-15).
@@ -39,6 +48,10 @@ import torch
 from nagahana.core.errors import InvariantViolation
 from nagahana.memory.access import Region
 
+#: Stored dtype of the Environment and Imagination K/V caches (D-54 follow-up: fp32, never 16-bit).
+CACHE_DTYPE: torch.dtype = torch.float32
+#: Bytes per stored cache element (fp32).
+CACHE_ELEMENT_BYTES: int = 4
 
 @dataclass(frozen=True)
 class KVCacheMeta:
@@ -69,8 +82,8 @@ class KVCacheMeta:
         if min(self.layers, self.heads, self.head_dim) <= 0:
             raise InvariantViolation("layers, heads and head_dim must be positive")
 
-    def bytes_per_position(self, element_bytes: int) -> int:
-        """Memory for one cached position: 2·L·H·d_h·element_bytes (keys and values)."""
+    def bytes_per_position(self, element_bytes: int = CACHE_ELEMENT_BYTES) -> int:
+        """Memory for one cached position: 2·L·H·d_h·element_bytes (keys and values; fp32 = 4 B, D-54)."""
         return 2 * self.layers * self.heads * self.head_dim * element_bytes
 
 

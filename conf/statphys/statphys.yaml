@@ -1,0 +1,116 @@
+# Statistical-physics readouts and early warning (src/nagahana/statphys, D-56).
+# Generated from the dataclasses in src/nagahana/statphys/config.py, the single source of truth:
+#     python -m nagahana statphys write-config conf/statphys/statphys.yaml
+# Do not edit by hand; change the dataclass defaults and regenerate (a test compares the two).
+# Emit a statistical-physics reading with every trigger of the inference engine.
+enabled: true
+# Network state at a trigger tau: the state updates of (tau - window, tau], for the traffic entropies and the activity multiplex (AS-764).
+state_window_seconds: 300.0
+
+# Gibbs readouts (AS-760 to AS-763).
+gibbs:
+  # Gibbs temperature T when verifier_family is null; 1.0 is the native temperature of TAAFT's energy in nats (AS-761).
+  temperature: 1.0
+  # Verifier output family whose temperature in force sets T (p_inf, stage, compromise, advice); null uses `temperature` (AS-761).
+  verifier_family: "p_inf"
+  # Valid points of the trailing least-squares slope of every growth rate; 2 is the backward difference (AS-763).
+  growth_window: 5
+  # Most entities whose energy growth is tracked online; the least recently updated is dropped beyond it (AS-763).
+  growth_entities: 65536
+
+# Shannon entropies of traffic distributions (AS-765, AS-766).
+traffic:
+  # Entropy estimator: plugin, miller_madow or chao_shen (AS-766).
+  estimator: "miller_madow"
+  # Distributions read per entity (AS-765).
+  entity_distributions: ["dst_port", "src_port", "protocol", "flags", "flag_mass", "peer"]
+  # Distributions read over the whole network (AS-765).
+  network_distributions: ["dst_port", "src_port", "protocol", "flags", "flag_mass", "src_entity", "dst_entity"]
+  # Participations that count for an entity: any, initiator or responder (AS-765).
+  roles: "any"
+  # Histogram changes between exact recomputations of sum n log n in the streaming counters (AS-778).
+  resync_every: 4096
+
+# Von Neumann and spectral entropies of the multiplex graph (AS-767 to AS-771).
+spectral:
+  # Graph state of the batch path: activity (state updates of the state window) or contacts (first contacts as of the trigger) (AS-767).
+  graph_source: "activity"
+  # Edge weight of the activity multiplex: binary, count or log1p_count (AS-767).
+  weight: "binary"
+  # Diffusion times tau of the spectral entropy, in units of 1 / edge weight (AS-768).
+  taus: [0.1, 1.0, 10.0]
+  # Connected components up to this size are diagonalised exactly; larger ones use stochastic Lanczos quadrature (AS-769).
+  exact_max_nodes: 512
+  # Initial Lanczos steps per probe vector (AS-769).
+  slq_steps: 32
+  # Largest Lanczos depth the adaptive depth control may reach (AS-769).
+  slq_max_steps: 128
+  # Fewest Rademacher probe vectors before the stopping rule may stop (AS-769).
+  slq_min_probes: 16
+  # Most Rademacher probe vectors (AS-769).
+  slq_max_probes: 256
+  # Probe vectors run together in one batched Lanczos pass (AS-769).
+  slq_probe_batch: 16
+  # Relative error target of every stochastic Lanczos estimate (AS-769).
+  slq_rel_tol: 0.001
+  # Absolute error target of every stochastic Lanczos estimate (AS-769).
+  slq_abs_tol: 1.0e-06
+  # Normal quantile multiplying the standard error in the stopping rule (2.576: two-sided 99 %) (AS-769).
+  slq_confidence: 2.576
+  # Approximate lowest non-zero Laplacian modes deflated exactly from the stochastic traces (0: none) (AS-769).
+  slq_deflation: 64
+  # Degree of the polynomial control variate of the stochastic traces, 0 to 4 (0: none; up to 2 needs only degrees and edge weights, 3 and 4 the sparse square of L) (AS-769).
+  slq_control_degree: 2
+  # Seed of the probe vectors (estimates are reproducible) (AS-769).
+  seed: 0
+  # Read the multiplex: per-plane entropies, inter-plane divergences, relative entropy and reduction (AS-771).
+  multiplex: true
+  # Linkage of the hierarchical reduction of the planes: average, single, complete or ward (AS-771).
+  linkage: "average"
+  # Density matrices of the divergence between successive states: laplacian (L / tr L) or diffusion (exp(-tau L) / Z) (AS-770).
+  jsd_kind: "laplacian"
+  # Diffusion time of the diffusion-kind divergence (AS-770).
+  jsd_tau: 1.0
+
+# Early-warning indicators and alarm (AS-772 to AS-778).
+ews:
+  # Rolling window of the indicators, in samples (one hour of 60 s triggers) (AS-772).
+  window: 60
+  # Detrending: none, gaussian (two-sided, offline analysis) or gaussian_causal (one-sided, online) (AS-772).
+  detrend: "gaussian_causal"
+  # Standard deviation of the Gaussian detrending kernel, in samples (AS-772).
+  bandwidth: 10.0
+  # Kernel support in standard deviations: the kernel has ceil(truncate * bandwidth) + 1 taps per side (AS-772).
+  kernel_truncate: 4.0
+  # Indicators computed on every full window (AS-773).
+  indicators: ["variance", "ar1", "skewness", "kurtosis", "return_rate", "spectral_ratio", "spectral_exponent", "dfa"]
+  # Upper edge of the low-frequency band of the spectral ratio, cycles per sample (AS-773).
+  spectral_low_max: 0.05
+  # Lower edge of the high-frequency band of the spectral ratio, cycles per sample (AS-773).
+  spectral_high_min: 0.25
+  # Box sizes of the detrended fluctuation analysis, in samples (AS-773).
+  dfa_scales: [4, 6, 8, 12]
+  # Fewest complete boxes per scale inside a window (AS-773).
+  dfa_min_boxes: 4
+  # Indicator values in the trailing Kendall trend statistic (AS-774).
+  trend_window: 60
+  # Surrogate series per family in the significance test (AS-775).
+  surrogates: 199
+  # Surrogate families: phase (phase-randomised) and ar1 (fitted AR(1)) (AS-775).
+  surrogate_kinds: ["phase", "ar1"]
+  # Indicators combined into the composite scores (AS-776).
+  composite_indicators: ["variance", "ar1"]
+  # Composite that raises the alarm: level (robust z of indicator levels) or trend (Kendall tau) (AS-777).
+  alarm_score: "level"
+  # Target false-alarm rate per trigger over all monitored series, calibrated on benign data (AS-777).
+  target_false_alarm_rate: 0.01
+  # Share of the benign calibration data that fits the baselines; the rest sets the threshold (AS-777).
+  calibration_fit_fraction: 0.5
+  # Streaming updates between exact recomputations of the running sums (AS-778).
+  resync_every: 60
+  # Seed of the surrogate generator (AS-775).
+  seed: 0
+# Reading series monitored by the streaming early-warning indicators (AS-777).
+ews_series: ["energy.total", "energy.marginal", "entities.free_energy", "entities.entropy", "routes.free_energy", "routes.entropy", "graph.vn.aggregate", "traffic.dst_port"]
+# JSON file of per-series alarm calibrations (written by `statphys calibrate`); null raises no alarm, because a threshold is never defaulted (AS-777).
+calibration_path: null

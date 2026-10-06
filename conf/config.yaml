@@ -1,29 +1,29 @@
 # NagaHana root configuration (Hydra composition format; readable with PyYAML too).
-#
-# Convention: `???` = undecided. Either a held design decision (see
-# src/nagahana/governance/decisions.py) or a hyperparameter nobody has chosen yet.
-# Reading a `???` key raises; nothing is defaulted [Q-39].
-# List what is still undecided:  python -m nagahana check-config conf/<file>.yaml
-
+# Generated from the typed dataclasses by nagahana.core.config.generate_conf (D-57). Do not edit by hand:
+# change the dataclass default and regenerate; tests compare this file with the code.
+# The run settings below have no default: ??? marks them as required (reading one raises).
 defaults:
-  - datamodel: v0
-  - physics: boundary
-  - memory: regions
+  - decisions: decisions
+  - site: site
+  - model/inputs: inputs
+  - model/graph: graph
   - model/cvgae: cvgae
-  - model/tstct: tstct
   - model/decoder: decoder
+  - model/tstct: tstct
+  - model/memory: memory
   - model/taaft: taaft
-  - model/heads: heads
+  - model/forecaster: forecaster
+  - model/advisor: advisor
+  - model/verifier: verifier
   - model/generator: generator
-  - tracking: mlflow
-  - runtime: accelerate
+  - model/training: training
   - _self_
-
 run:
-  mode: ???                 # train | evaluate | infer_live | forensic_replay | lab (no default mode)
+  # [core/modes.py] train | evaluate | infer_live | forensic_replay | lab (no default mode)
+  mode: ???
+  # [run setting] seed of every random draw of the run (route sampling, masking, splits)
   seed: ???
-  site: ???                 # deployment site id (Kafka topics, calibration adapters)
-
-# Proposals (P-xx) enabled for this run. Proposal code runs only when listed here.
-# Empty by default: proposals are engineering suggestions awaiting the owner's approval.
-enabled_proposals: []
+  # [run setting] deployment site id (topics, calibration adapters)
+  site: ???
+  # [governance/decisions.py] proposals (P-xx) whose code may run in this run; empty by default
+  enabled_proposals: []

@@ -1,0 +1,46 @@
+# Forecaster (build-spec section 2.8). (models/config/components.py, ForecasterConfig).
+# Generated from the typed dataclasses by nagahana.core.config.generate_conf (D-57). Do not edit by hand:
+# change the dataclass default and regenerate; tests compare this file with the code.
+forecaster:
+  # [build-spec section 4] model width
+  dim: 1024
+  # [build-spec section 4] pre-norm blocks
+  blocks: 8
+  # [build-spec section 4] attention heads per block
+  heads: 16
+  # [AS-32] SwiGLU hidden width
+  mlp_hidden: 2816
+  # [AS-20] ATT&CK technique action slots
+  n_techniques: 700
+  # [build-spec section 2.8] top entities by compromise in the context (plus the adversary slots)
+  context_entities: 48
+  # [AS-12] one imagined step, and the trigger cadence
+  window_seconds: 60.0
+  # [D-30] default K, set at run time
+  horizon_k: 12
+  # [D-46] default N, the maximum number of routes
+  routes_n: 200
+  # [AS-21] candidate actions re-weighted per step
+  mppi_top_b: 8
+  # [AS-21] MPPI softmax temperature
+  mppi_temperature: 1.0
+  # [AS-253] discount of the adversary's return
+  gamma: 0.97
+  # [AS-17] beta of the adversary reward
+  infiltration_bonus: 1.0
+  # [AS-17] kappa of the adversary reward
+  exposure_cost: 0.1
+  # [AS-253] lambda of the TD(lambda) value targets
+  td_lambda: 0.95
+  # [AS-251] monte_carlo (count / N) or probability (mode-seeking)
+  route_estimator: monte_carlo
+  # [build-spec section 4b.8] band of the infiltration curve over routes
+  band_quantiles: [0.1, 0.9]
+  # [AS-12] triggers per imagined step in teacher forcing
+  future_stride: 1
+  # [D-49] shortest rotary period for imagined-step time t = k x window_seconds
+  rotary_p_min: 1.0
+  # [D-49] longest rotary period (one week)
+  rotary_p_max: 604800.0
+  # [build-spec section 2.8] routes imagined per chunk (0 = all at once); a memory bound with identical results
+  route_chunk: 0

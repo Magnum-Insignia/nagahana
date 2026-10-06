@@ -1,8 +1,7 @@
-# NagaHana research codebase.
-# Dependency groups follow the approved stack (decision D-09, 2026-09-29: "all the tech stack yours
-# and mine together"). The core needs only NumPy + PyTorch (+ PyYAML for configs); everything else is
-# an optional extra so a laptop, the Fedora workstation and a GPU server can each install what they use.
-# Version pins are deliberately absent until the first environment lock (see docs/adr/0001).
+# NagaHana.
+# Dependency groups follow the approved stack (D-09, D-55). The core needs NumPy, pandas, PyTorch and
+# PyYAML; everything else is an optional extra, so each host installs only what it uses.
+# Version pins are set at the first environment lock (docs/adr/0001).
 
 [build-system]
 requires = ["hatchling>=1.24"]
@@ -14,19 +13,20 @@ version = "0.0.1"
 description = "NagaHana: Adversary Foundation Model for Simulation-based Threat Forecasting (research codebase)"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = ["numpy", "torch", "pyyaml"]
+dependencies = ["numpy", "pandas", "torch", "pyyaml"]
 
 [project.optional-dependencies]
 graph = ["torch-geometric"]                                   # PyG (incl. TGN, HypergraphConv, HeteroData)
 rl = ["torchrl", "tensordict", "LightZero"]                   # policy/value agents, MCTS/MuZero family
 metrics = ["torchmetrics"]
+baselines = ["scikit-learn", "xgboost", "lightgbm", "catboost"]   # published-baseline reproductions (D-55)
 config = ["hydra-core", "omegaconf"]
 track = ["mlflow", "dvc"]
 scale = ["accelerate", "deepspeed"]                           # DeepSpeed: Linux/CUDA hosts
 jax = ["jax", "equinox", "flax", "diffrax", "optimistix", "jaxtyping", "blackjax", "numpyro"]
 prob = ["pyro-ppl"]
 data = ["pandas", "polars", "pyarrow", "duckdb", "scipy", "statsmodels"]
-pcap = ["scapy", "pyshark"]
+pcap = ["dpkt", "scapy", "pyshark"]                       # dpkt: the PCAP adapter (ingest/pcap.py)
 ui = ["streamlit"]                                            # demo interface choice is held (D-28)
 perf = ["triton", "flash-attn"]                               # Linux/CUDA hosts
 docs = ["mkdocs", "mkdocs-material", "pymdown-extensions"]
@@ -43,6 +43,10 @@ packages = ["src/nagahana"]
 pythonpath = ["src"]
 testpaths = ["tests"]
 addopts = "-q"
+markers = [
+    "slow: long-running test, run in the nightly CI job",
+    "gpu: needs a CUDA device; deselected on CPU-only hosts",
+]
 
 [tool.ruff]
 line-length = 130

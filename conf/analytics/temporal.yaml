@@ -1,0 +1,50 @@
+# Temporal analytics (`analytics.temporal`).
+# Generated from nagahana.analytics.config.TemporalConfig by render_yaml; the dataclass is the single
+# source of truth. Every value equals its dataclass default (check_yaml_file verifies it).
+temporal:
+  # count series resolution in seconds (the AS-12 cadence)
+  bin_seconds: 60.0
+  # lags of the ACF and PACF
+  acf_lags: 60
+  # Welch segment length in bins
+  welch_segment: 256
+  # level of Fisher's g test
+  periodicity_alpha: 0.01
+  # ADF deterministic terms: n, c, ct or ctt
+  adf_regression: c
+  # ADF lag selection: aic, bic, t-stat or none
+  adf_autolag: aic
+  # ADF largest lag (null: floor(12 (T/100)^(1/4)), Schwert 1989)
+  adf_max_lag: null
+  # KPSS deterministic terms: c or ct
+  kpss_regression: c
+  # KPSS bandwidth: nw1994, schwert or an integer
+  kpss_lags: nw1994
+  # PELT cost: normal_mean, normal_meanvar, poisson or exponential
+  pelt_cost: normal_meanvar
+  # PELT penalty: bic, aic or a number
+  pelt_penalty: bic
+  # PELT minimum segment length (at least 3 for normal_meanvar)
+  pelt_min_size: 3
+  # BOCPD constant hazard (1 / expected run length)
+  bocpd_hazard: 0.004
+  # BOCPD observation model: normal or poisson
+  bocpd_model: normal
+  # run lengths with smaller posterior mass are pruned
+  bocpd_prune: 1.0e-08
+  # run lengths kept at most
+  bocpd_max_run: 5000
+  # DFA detrending order
+  dfa_order: 1
+  # DFA smallest box
+  dfa_min_scale: 8
+  # DFA largest box as a share of the series
+  dfa_max_scale_share: 0.25
+  # DFA box sizes (geometric)
+  dfa_scales: 24
+  # entities with fewer events get no burstiness
+  entity_min_events: 10
+  # entities listed in the burstiness table (most active first)
+  max_entities: 500
+  # seed of every random choice of the analysis
+  seed: 0

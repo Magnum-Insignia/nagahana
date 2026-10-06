@@ -1,26 +1,58 @@
-"""The Simulator: builds and maintains the Environment (D-35; [A-03]–[A-05], [A-11], [A-12]).
+"""The Simulator role: builds and maintains the Environment (D-35; [A-03], [A-05], [A-11], [A-12]).
 
-"the first phase of the work is done by simulator always which does the work of taking input and
-generating/updating/managing the environment" (ai-mod-arch).
+The Simulator takes input and generates, updates and manages the Environment. Per state update (event-driven,
+D-30), the inference engine (`inference/engine.Engine.ingest`) runs its steps:
 
-Per state update (event-driven, D-30):
-1. fold the update into the hypergraph (graph/builder.py; D-04 held);
-2. encode with CVG-AE (models/cvgae) into the shared latent space;
-3. run TSTCT, which appends to the Environment KV cache (memory/kvcache.py; D-15 held);
-4. score reconstructions with the shared physics term during training (physics/term.py).
+1. the update joins the event log (`inference/buffer.EventLog`, the durable record under the working option of
+   D-15, AS-11);
+2. the open window is built as training builds it (`data.windows.build_window`, whose structure is
+   `graph.window`'s hypergraph as of every position, AS-01, AS-02, D-52);
+3. CVG-AE encodes the new positions (posterior mean, AS-05);
+4. TSTCT's step appends their keys and values to the Environment store (`memory/environment.py`); the Simulator
+   is the only writer of the Environment, and beliefs never enter it (D-35, D-43).
 
-The Simulator is the only writer of the Environment (memory/access.py). Beliefs never enter it.
+The physics term scores the reconstructions during training (`physics/term.py`); the Decoder has none of its
+own. `Simulator` is the role's handle on that computation: it converts state-update objects to the engine's
+columnar form and returns the Forecaster triggers that fell due while the updates were processed.
 """
 
 from __future__ import annotations
 
-from nagahana.core.errors import NotBuiltYet
+from collections.abc import Sequence
+from typing import TYPE_CHECKING
+
+from nagahana.datamodel.columnar import Column
 from nagahana.datamodel.records import StateUpdate
+
+if TYPE_CHECKING:
+    from nagahana.inference.engine import Engine, TriggerResult
+    from nagahana.memory.environment import EnvironmentStore
 
 
 class Simulator:
-    """Role orchestrator (template)."""
+    """The Simulator role over the inference engine (module docstring).
 
-    def ingest(self, update: StateUpdate) -> None:
-        """Process one state update into the Environment."""
-        raise NotBuiltYet("Simulator ingest (builder → CVG-AE → TSTCT → Environment)", waiting_on=("D-04", "D-15"))
+    Parameters
+    ----------
+    engine: the inference engine of the site.
+    columns: the column layout of the adapter's state updates (`datamodel.columnar.Column`).
+    """
+
+    def __init__(self, engine: Engine, columns: Sequence[Column]) -> None:
+        self.engine = engine
+        self.columns = tuple(columns)
+
+    def ingest(self, update: StateUpdate) -> list[TriggerResult]:
+        """Process one state update into the Environment; returns the triggers that fell due meanwhile."""
+        return self.ingest_many([update])
+
+    def ingest_many(self, updates: Sequence[StateUpdate]) -> list[TriggerResult]:
+        """Process state updates (in event-time order) into the Environment; returns the triggers that fired."""
+        if not updates:
+            return []
+        return self.engine.ingest_states(updates, self.columns)
+
+    @property
+    def environment(self) -> EnvironmentStore | None:
+        """The Environment store the engine maintains (None before the first update)."""
+        return self.engine.store

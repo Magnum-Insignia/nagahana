@@ -1,0 +1,68 @@
+# Topological data analysis (`analytics.tda`).
+# Generated from nagahana.analytics.config.TDAConfig by render_yaml; the dataclass is the single
+# source of truth. Every value equals its dataclass default (check_yaml_file verifies it).
+tda:
+  # homology dimensions H_0 ... H_max_dimension
+  max_dimension: 2
+  # Rips radius; null: radius_quantile, else the degree budget, else the enclosing radius
+  max_radius: null
+  # quantile of pairwise distances used as the radius (null: unused)
+  radius_quantile: null
+  # without a radius: the radius where the mean vertex degree reaches this (capped by the enclosing radius)
+  max_mean_degree: 32.0
+  # point metric: euclidean, chebyshev or cityblock
+  metric: euclidean
+  # maxmin landmarks (null: every point up to cloud_max_points)
+  n_landmarks: null
+  # larger clouds are reduced to this many maxmin landmarks
+  cloud_max_points: 2000
+  # seeded uniform row sample before landmark selection
+  cloud_sample_rows: 50000
+  # refuse complexes larger than this
+  max_simplices: 5000000
+  # reduction: cohomology or homology
+  algorithm: cohomology
+  # clearing (twist) optimisation
+  clearing: true
+  # apparent-pair shortcut
+  apparent_pairs: true
+  # bars with smaller persistence are dropped from the outputs
+  min_persistence: 0.0
+  # persistence landscape levels
+  landscape_k: 5
+  # landscape grid points
+  landscape_resolution: 256
+  # persistence image pixels per side
+  image_resolution: 32
+  # persistence image kernel width (null: 1/30 of the largest persistence)
+  image_sigma: null
+  # Betti curve grid points
+  betti_resolution: 256
+  # order p of the Wasserstein distance
+  wasserstein_p: 2.0
+  # ground norm of diagram distances: inf or 2
+  ground_norm: inf
+  # sliding-window dimension (null: false nearest neighbours)
+  sw_dimension: null
+  # sliding-window delay in samples (null: first minimum of the average mutual information)
+  sw_delay: null
+  # sliding-window stride in samples
+  sw_stride: 1
+  # sliding-window points at most (maxmin landmarks of the normalised window cloud)
+  sw_max_points: 150
+  # largest dimension tried by false nearest neighbours
+  sw_max_dimension: 12
+  # largest delay tried by the average mutual information
+  sw_max_delay: 64
+  # bin of the update-count series embedded by the sliding window
+  sw_bin_seconds: 1.0
+  # longer count series are aggregated into this many bins
+  sw_max_series: 20000
+  # corpus columns of the point cloud (empty: numeric columns contributing in at least half of the rows)
+  features: []
+  # contact-topology windows when the corpus has no window records
+  window_seconds: 60.0
+  # windows analysed at most (evenly spread over the corpus)
+  max_windows: 500
+  # seed of every random choice of the analysis
+  seed: 0
